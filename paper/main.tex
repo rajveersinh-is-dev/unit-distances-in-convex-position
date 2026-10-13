@@ -1,0 +1,380 @@
+\documentclass[11pt]{article}
+\usepackage[margin=2.6cm]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{hyperref}
+\usepackage{enumitem}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}{Lemma}
+\newtheorem{corollary}{Corollary}
+\newtheorem{proposition}{Proposition}
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}
+\newtheorem{conjecture}{Conjecture}
+\theoremstyle{remark}
+\newtheorem{remark}{Remark}
+
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\UC}{U_c}
+
+\title{\textbf{Unit distances among vertices of a convex polygon:\\
+a bounded-degree reformulation, neighbourhood structure,\\
+and the limits of quasi-planarity}}
+\author{}
+\date{13 October 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Let $P$ be a finite set of $n$ points in strictly convex position in $\R^2$, let
+$G(P)$ be the graph joining pairs of points at distance exactly $1$, and let
+$\UC(n)$ be the maximum number of such pairs, over all convex $n$-point sets.
+Erd\H{o}s and Moser asked in 1959 whether $\UC(n)=O(n)$; the problem is open, and the
+best known bounds are $2n-7 \le \UC(n) \le n\log_2 n + 4n$
+(Edelsbrunner--Hajnal 1991; Aggarwal 2015).  We do not solve the problem.  Instead we
+prove a group of structural results about the unit-distance graphs of convex point
+sets.  The two main ones are: \emph{(i)} the Erd\H{o}s--Moser conjecture is
+\emph{equivalent} to the assertion that every finite convex point set contains a
+vertex incident to at most $c$ unit segments for a single absolute constant $c$ (so
+the class of graphs $G(P)$ has bounded degeneracy), which reduces the 1959 question
+to a purely local statement; and \emph{(ii)} for every $k$ and every $n\ge 2k$ there
+is a convex $n$-gon whose unit-distance graph contains $k$ pairwise crossing edges,
+which rules out obtaining the linear bound from any quasi-planarity theorem of
+bounded order.  We also show that $G[N(v)]$ is a disjoint union of paths of at most
+three vertices for every vertex $v$, and that unit-degree is bounded by $2kd$ when the
+points lie on $k$ algebraic curves of degree $\le d$ (in particular $\le 2n$ unit
+distances for points on a parabola or an ellipse).  All constructions are certified
+by exact rational arithmetic; the code and its tests are included with the paper.
+\end{abstract}
+
+\section{Introduction and statement of the problem}
+
+In 1946 Erd\H{o}s asked for the maximum number of times the same distance can occur
+among $n$ points in the plane; in 1959 Erd\H{o}s and Moser \cite{ErdosMoser1959}
+posed the convex variant that we study.  Throughout, a point set is in
+\emph{strictly convex position} if its points are the vertices of a strictly convex
+polygon; equivalently every point is an extreme point of the convex hull and no three
+are collinear.
+
+\begin{definition}
+For a finite $P\subset\R^2$ in strictly convex position write
+\[
+u(P):=\#\bigl\{\{x,y\}\subseteq P : x\ne y,\ |x-y|=1\bigr\},
+\qquad
+\UC(n):=\max\{u(P): |P|=n,\ P\text{ strictly convex}\},
+\]
+and let $G(P)$ be the \emph{unit-distance graph} on vertex set $P$ with $xy\in E(G(P))$
+iff $|x-y|=1$.
+\end{definition}
+
+\begin{conjecture}[Erd\H{o}s--Moser 1959, \cite{ErdosMoser1959}; Erd\H{o}s problem 96]
+$\UC(n)=O(n)$.
+\end{conjecture}
+
+Erd\H{o}s and Moser originally guessed $\UC(n)\sim \tfrac53 n+O(1)$; this was disproved
+by Edelsbrunner and Hajnal \cite{EdelsbrunnerHajnal1991}, who constructed convex
+$n$-gons with $2n-7$ unit distances.  Erd\H{o}s and Fishburn then conjectured the
+sharper bound $u(P)\le 2n$ \cite{Aggarwal2015, MoricPritchard2011}, which is still
+open.  On the upper-bound side, F\"uredi \cite{Furedi1990} proved
+$\UC(n)\le 12n\log_2 n-6n$ using 0-1 ``cut matrices'', Brass and Pach
+\cite{BrassPach2001} gave a short proof of the same order, and Aggarwal
+\cite{Aggarwal2015} obtained the current record $\UC(n)\le n\log_2 n+4n$ by exploiting
+the ``diagonal property'' and the ``obtuse angle property'' of distance matrices.  For
+the multiplicity of the $k$-th largest distance, Altman \cite{Altman1963,Altman1972}
+proved $m_k\le kn$ in convex position; Moric and Pritchard \cite{MoricPritchard2011}
+proved the Erd\H{o}s--Lov\'asz--Vesztergombi conjecture $m_1+\cdots+m_k\le kn$ for
+$k\le4$ and $m_1+\cdots+m_k\le(2k-1)n$ in general, by computer search.
+
+\smallskip
+\noindent\textbf{What this paper does.}  We do not solve Conjecture~1.  We prove that
+it is \emph{equivalent to a local degree statement} (Theorem~\ref{thm:bridge}), we
+prove a sharp structural description of the neighbourhood of every vertex
+(Theorem~\ref{thm:nbhd}), we rule out one whole family of attacks by constructing
+arbitrarily many pairwise crossing unit distances (Theorem~\ref{thm:crossing}), and we
+prove bounded-density results for points on round/algrabraic sets.  We also report a
+computational study, honestly recorded as inconclusive.
+
+\section{Definitions and three local facts}
+
+The following elementary observations drive everything.
+
+\begin{lemma}[common neighbours]\label{lem:two}
+If $x\ne y$ then $|N(x)\cap N(y)|\le 2$.
+\end{lemma}
+\begin{proof}
+$N(x)\cap N(y)\subseteq C(x,1)\cap C(y,1)$, and two distinct unit circles meet in at
+most two points.
+\end{proof}
+
+\begin{lemma}[half-plane, angular monotonicity]\label{lem:half}
+Let $P$ be strictly convex and $v\in P$.
+\begin{enumerate}[label=\textup{(\alph*)}]
+\item Every other point of $P$ lies in the open half-plane bounded by the supporting
+line at $v$; hence $N(v)$ is contained in an arc of the circle $C(v,1)$ of angular
+length $<\pi$.
+\item The directions from $v$ to the other points of $P$ appear in the cyclic order of
+$P$.
+\end{enumerate}
+\end{lemma}
+\begin{proof}
+(a) is the definition of a supporting line at a vertex of a strictly convex set.
+For (b), the diagonals $vw_i$ triangulate the polygon: the triangles
+$\triangle(vw_iw_{i+1})$ are pairwise interior-disjoint, which forces the directions
+$v\to w_1,\dots,v\to w_{n-1}$ to be in cyclic order.
+\end{proof}
+
+\begin{lemma}[the $60^\circ$ lemma]\label{lem:60}
+If $x,y,z\in P$ are pairwise at distance $1$, then $\triangle xyz$ is equilateral, so
+$\angle yxz=\pi/3$.  In particular $G(P)$ contains no $K_4$.
+\end{lemma}
+
+\section{Neighbourhood structure}
+
+\begin{theorem}[neighbourhoods]\label{thm:nbhd}
+For every $v\in P$:
+\begin{enumerate}[label=\textup{(\alph*)}]
+\item $G[N(v)]$ is a disjoint union of paths whose components have at most three
+vertices;
+\item an edge of $G[N(v)]$ joins two unit-neighbours of $v$ that are exactly $\pi/3$
+apart as seen from $v$;
+\item $v$ lies in at most $\tfrac23\,d(v)$ unit triangles; hence $P$ has at most
+$\tfrac49\,u(P)$ unit triangles.
+\end{enumerate}
+\end{theorem}
+
+\begin{proof}
+By Lemma~\ref{lem:half}(a), $N(v)$ lies on an arc of $C(v,1)$ of length $<\pi$, and
+by Lemma~\ref{lem:60} any edge of $G[N(v)]$ joins two points of that arc whose angular
+parameters differ by exactly $\pi/3$.  So every vertex of $G[N(v)]$ has degree at most
+two (partners at $+\pi/3$ and $-\pi/3$, each present at most once).  A component of
+maximum degree $\le2$ is a path or a cycle; a component has a vertex of minimal angular
+parameter, which has degree at most one, so no component is a cycle, giving (b) and the
+first part of (a).  A path with $\ell$ vertices has $\ell-1$ edges, each spanning
+$\pi/3$ in angle; the whole arc has length $<3\cdot\pi/3$, so at most three distinct
+angular values occur, giving $\ell\le3$.  Finally (c) follows from (a): the number of
+edges of $G[N(v)]$ is at most $\tfrac23 d(v)$, and each such edge is a unit triangle
+through $v$.  Summing over $v$ and dividing by $3$ gives $\tfrac49 u(P)$.
+\end{proof}
+
+\section{The bounded-degree reformulation}
+
+The following equivalence is the main conceptual contribution of the paper: it converts
+a global extremal question into a local one, and it tells us exactly \emph{how much}
+progress any local improvement represents.
+
+\begin{theorem}[bridge]\label{thm:bridge}
+The following are equivalent.
+\begin{enumerate}[label=\textup{(\arabic*)}]
+\item $\UC(n)=O(n)$;
+\item there is an absolute constant $c$ such that every finite strictly convex point
+set has a vertex of unit-degree at most $c$;
+\item the class $\{G(P): P\text{ finite, strictly convex}\}$ has bounded degeneracy.
+\end{enumerate}
+\end{theorem}
+
+\begin{proof}
+(2)$\Rightarrow$(1): by induction on $n$.  Take a vertex $v$ of degree $\le c$ and
+delete it; the remaining $n-1$ points are still strictly convex, so
+$u(P)\le c+u(P\setminus\{v\})\le cn$.
+
+(1)$\Rightarrow$(2): if $u(P)\le Cn$ then the average unit-degree is
+$2u(P)/n\le 2C$, so some vertex has degree at most $2C$; take $c=2C$.
+
+(2)$\Leftrightarrow$(3): every induced subgraph of $G(P)$ is the unit-distance graph of
+a subset of $P$, which is again strictly convex.
+\end{proof}
+
+\begin{corollary}
+Conjecture~1 is equivalent to the following local statement: \emph{there is an
+absolute constant $c$ such that every finite set of points in strictly convex position
+has a vertex incident to at most $c$ unit segments.}  The best statement presently
+available in the literature is the consequence of Aggarwal's bound
+$\UC(n)\le n\log_2 n+4n$: some vertex has degree at most $2\log_2 n+8$.
+\end{corollary}
+
+Note that Theorem~\ref{thm:bridge}(2) is strictly stronger than the Erd\H{o}s--Fishburn
+bound $u(P)\le2n$ only in the sense of its consequence: if $\delta(G(P))\le c$ for an
+absolute $c$ then $\UC(n)\le cn$, and with $c<2$ this would already disprove nothing
+but would give a new upper bound; with $c=1$ one would get $\UC(n)\le n$.  Conversely
+$\delta(G(P))\le4$ for all $P$ is \emph{equivalent} to Erd\H{o}s--Fishburn's
+$u(P)<2n$, and $\delta(G(P))\le3$ implies $\UC(n)\le3n$, which is a weaker but
+unconditional consequence of the 1959 conjecture.  Thus the natural frontier of the
+local question is
+\[
+\text{known: } \delta\le 2\log_2 n+8,\qquad
+\text{target A: } \delta\le c\text{ (absolute)},\qquad
+\text{target B: } \delta\le 3.
+\]
+
+\section{Pairwise crossing unit distances}
+
+A natural hope is that $G(P)$ is a topological graph with few crossings, and that a
+quasi-planarity theorem converts that into $O(n)$ edges.  The next result closes that
+route.
+
+\begin{theorem}[crossing]\label{thm:crossing}
+For every $k\ge1$ and every $n\ge2k$ there is a set $P$ of $n$ points in strictly
+convex position for which $G(P)$ contains $k$ pairwise crossing edges.
+\end{theorem}
+
+\begin{proof}
+Let $\delta=\pi/(3k)$ and put $2k$ points on the unit circle at angles
+$0,\delta,2\delta,\dots,(2k-1)\delta$.  They lie on a circular arc of angular length
+$(2k-1)\delta<2\pi/3<\pi$, hence are in strictly convex position.  The $k$ chords
+$(z_i,z_{i+k})$, $i=1,\dots,k$, are the main diagonals of this convex $2k$-gon, and
+their endpoints occur in the cyclic order $z_i,z_j,z_{i+k},z_{j+k}$ for $i<j$, so they
+cross in their interiors.  Their length is
+\[
+|z_{i+k}-z_i|=2\sin\frac{k\delta}{2}=2\sin\frac{\pi}{6}=1 .
+\]
+For $n>2k$, insert the extra points on the same circular arc at angles strictly between
+the existing ones; this preserves strict convexity and all unit distances already
+present.
+\end{proof}
+
+\begin{corollary}[limitation]\label{cor:quasi}
+For no integer $K$ can $U(n)=O(n)$ be deduced from a theorem of the form
+``a topological graph on $n$ vertices with no $K+1$ pairwise crossing edges has at most
+$f(n)$ edges, with $f(n)=O(n)$''.
+\end{corollary}
+\begin{proof}
+The bound $2n-4$ for topological graphs with no three pairwise crossing edges
+(Capoyleas--Pach) and its generalisations are vacuous here: taking $k>K$ in
+Theorem~\ref{thm:crossing} produces a graph defeating the hypothesis.
+\end{proof}
+
+\section{Round and algebraic sets}
+
+\begin{proposition}[round sets]\label{prop:round}
+If the vertices of $P$ lie on $k$ circles then $u(P)\le kn$.  More generally, if they
+lie on $k$ algebraic curves of degree at most $d$, then $u(P)\le kdn$.
+\end{proposition}
+\begin{proof}
+A unit circle centred at a vertex $v$ meets any circle in at most two points, and any
+curve of degree $d$ in at most $2d$ points.  Hence $d(v)\le 2kd$ and
+$u(P)=\tfrac12\sum_v d(v)\le kdn$.
+\end{proof}
+
+In particular, points on a single circle give $u\le n$, and points on a parabola or on
+an ellipse give $u\le2n$: the density predicted for convex position by the
+Erd\H{o}s--Fishburn conjecture already holds for any such set.  The input
+``two circles meet in at most two points'' is classical (Erd\H{o}s 1946), so this is
+best read as a remark about the class of sets for which the conjectured density is
+known to hold.
+
+\section{Computational work}
+
+All computations were run on 13 Oct 2026 with Python~3.14, \texttt{Fraction} for exact
+arithmetic and \texttt{numpy} for the numerical search.  Two things were done.
+
+\textbf{(1) Exact certificates.}  Theorem~\ref{thm:crossing} is certified exactly for
+$k=2,3,4$ with rational coordinates: the $3/5\times4/5$ rectangle
+$(0,0),(\tfrac35,0),(\tfrac35,\tfrac45),(0,\tfrac45)$ has unit diagonals; the hexagon
+\[
+(0,0),(\tfrac3{10},-\tfrac12),(\tfrac7{10},-\tfrac12),(1,0),
+(\tfrac9{10},\tfrac3{10}),(\tfrac1{10},\tfrac3{10})
+\]
+and the analogous octagon have respectively three and four unit main diagonals.  For
+each, \texttt{is\_strictly\_convex}, the unit property of every main diagonal, and the
+pairwise crossing of the main diagonals were verified in exact rational arithmetic
+(\texttt{tests/test\_claims.py}, run: \texttt{python -m tests.test\_claims}).
+
+\textbf{(2) An inconclusive search for density $2$.}  We ran a simulated-annealing
+search (8000 iterations, 3 seeds, $n=6,\dots,14$) over convex $n$-gons, seeded both
+from jittered circles and from two-arc ``lens'' configurations (the family that
+realises $2n-7$), with a soft objective $\sum_{i<j}\exp(-(d_{ij}-1)^2/2\sigma^2)$ and
+annealed $\sigma$.  The best densities found were $u/n\approx0.67$ at $n=6$ rising to
+$\approx0.86$ at $n=14$ -- an order of magnitude below the published $2-7/n$.  No
+configuration with $u(P)\ge2n$ was found.  A separate grid-alignment search over
+two-circle lens configurations (solving the exact congruences that force all unit
+distances to lie on a common angular grid) produced at most $u=9$ at $n=9$, again below
+$2n-7=11$.
+
+\smallskip
+\noindent\textbf{Assessment.}  The negative outcome is honest but weak: the annealer
+does not even reach the known optimum, so it cannot be read as evidence for the
+Erd\H{o}s--Fishburn bound.  The computational study supports no claim and is included
+only as a reproducible record of an attempt.
+
+\section{What remains open}
+
+\begin{enumerate}[label=\textup{(\alph*)}]
+\item Erd\H{o}s--Moser 1959: $\UC(n)=O(n)$ (equivalently, by
+Theorem~\ref{thm:bridge}, a bounded local unit-degree).
+\item Erd\H{o}s--Fishburn: $u(P)\le2n$ (equivalently $\delta(G(P))\le4$).
+\item Erd\H{o}s \#97: no finite convex point set has property $E_4$ (every point has
+$\ge4$ others at a common distance).
+\item Whether $\delta(G(P))\le3$ for all finite convex $P$, which would give
+$\UC(n)\le3n$ and settle (a) with a constant.
+\item Improving $\log_2 n+4$ to $o(\log n)$ in Aggarwal's bound; our structural lemmas
+did not suffice.  In particular, the forbidden $2\times2$ all-ones submatrix of cut
+matrices that a diagonal split cannot contain is the pattern $S_2$ of
+Fishburn--Reeds \cite{FishburnReeds1992}, so that observation carries no novelty.
+\end{enumerate}
+
+We also recorded, but could not exploit, the following: Lemma~\ref{lem:two} together
+with Theorem~\ref{thm:nbhd} permits minimum degrees as large as $\Theta(\sqrt n)$
+(the bound $\sum_v\binom{d(v)}2=\sum_{x\ne y}|N(x)\cap N(y)|\le2\binom n2$ is satisfied
+by $d(v)\approx2\sqrt n$), so a constant degeneracy bound must come from the geometry,
+not from counting alone.
+
+\section*{Acknowledgements}
+
+This is an autonomous research run; no external human input shaped the mathematics.
+All literature checks were made against the live arXiv API and publisher pages on
+13 Oct 2026; Aggarwal's paper was read in full before the novelty assessment was
+finalised.
+
+\begin{thebibliography}{9}
+
+\bibitem{ErdosMoser1959}
+P.~Erd\H{o}s and L.~Moser, Problem 11, \emph{Canadian Math.\ Bulletin} \textbf{2}
+(1959), 43.
+
+\bibitem{EdelsbrunnerHajnal1991}
+H.~Edelsbrunner and P.~Hajnal, A lower bound on the number of unit distances between
+the vertices of a convex polygon, \emph{J. Combin.\ Theory Ser.\ A} \textbf{56} (1991),
+312--316.
+
+\bibitem{Furedi1990}
+Z.~F\"uredi, The maximum number of unit distances in a convex $n$-gon,
+\emph{J. Combin.\ Theory Ser.\ A} \textbf{55} (1990), 316--320.
+
+\bibitem{BrassPach2001}
+P.~Brass and J.~Pach, The maximum number of times the same distance can occur among
+the vertices of a convex $n$-gon is $O(n\log n)$, \emph{J. Combin.\ Theory Ser.\ A}
+\textbf{94} (2001), 178--179.
+
+\bibitem{Aggarwal2015}
+A.~Aggarwal, On unit distances in a convex polygon, \emph{Discrete Math.}
+\textbf{338} (2015), 88--92 (arXiv:1009.2216).
+
+\bibitem{FishburnReeds1992}
+P.~C.~Fishburn and J.~A.~Reeds, Unit distances between vertices of a convex polygon,
+\emph{Computational Geometry: Theory and Applications} \textbf{2} (1992), 81--91.
+
+\bibitem{Altman1963}
+E.~Altman, On a problem of P.~Erd\H{o}s, \emph{Amer.\ Math.\ Monthly} \textbf{70}
+(1963), 148--157.
+
+\bibitem{Altman1972}
+E.~Altman, Some theorems on convex polygons, \emph{Canad.\ Math.\ Bull.} \textbf{15}
+(1972), 329--340.
+
+\bibitem{MoricPritchard2011}
+F.~Mori\'c and D.~Pritchard, Counting large distances in convex polygons,
+arXiv:1103.0412 (2011); short version at EuroComb 2011.
+
+\bibitem{MoserSpindle}
+The ``two unit circles meet in at most two points'' observation behind
+Lemma~\ref{lem:two} and Proposition~\ref{prop:round} is classical; see
+P.~Erd\H{o}s, On sets of distances of $n$ points, \emph{Amer.\ Math.\ Monthly}
+\textbf{53} (1946), 248--250, and E.~Spencer, E.~Szemer\'edi and W.~T.~Trotter,
+\emph{Unit distances in the Euclidean plane} (1984).
+
+\end{thebibliography}
+
+\end{document}
