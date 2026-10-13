@@ -195,19 +195,19 @@ available in the literature is the consequence of Aggarwal's bound
 $\UC(n)\le n\log_2 n+4n$: some vertex has degree at most $2\log_2 n+8$.
 \end{corollary}
 
-Note that Theorem~\ref{thm:bridge}(2) is strictly stronger than the Erd\H{o}s--Fishburn
-bound $u(P)\le2n$ only in the sense of its consequence: if $\delta(G(P))\le c$ for an
-absolute $c$ then $\UC(n)\le cn$, and with $c<2$ this would already disprove nothing
-but would give a new upper bound; with $c=1$ one would get $\UC(n)\le n$.  Conversely
-$\delta(G(P))\le4$ for all $P$ is \emph{equivalent} to Erd\H{o}s--Fishburn's
-$u(P)<2n$, and $\delta(G(P))\le3$ implies $\UC(n)\le3n$, which is a weaker but
-unconditional consequence of the 1959 conjecture.  Thus the natural frontier of the
-local question is
+Note the relation between the local statement and the two named conjectures.  The
+average degree is $2u(P)/n$, so Erd\H{o}s--Fishburn's $u(P)\le2n$ (if true) would imply
+$\delta(G(P))\le4$.  Conversely, $\delta(G(P))\le c$ for an absolute $c$ implies
+$\UC(n)\le cn$, i.e. Conjecture~1 itself; in particular $\delta\le4$ already suffices,
+and $\delta\le3$ would give the unconditional bound $\UC(n)\le3n$.  The frontier of
+the local question is therefore
 \[
 \text{known: } \delta\le 2\log_2 n+8,\qquad
-\text{target A: } \delta\le c\text{ (absolute)},\qquad
-\text{target B: } \delta\le 3.
+\text{intermediate: } \delta\le 4,\qquad
+\text{target: } \delta\le c\text{ (absolute)},
 \]
+and Theorem~\ref{thm:bridge} says the last line, with no restriction on how large $c$
+is, is exactly the Erd\H{o}s--Moser conjecture.
 
 \section{Pairwise crossing unit distances}
 
