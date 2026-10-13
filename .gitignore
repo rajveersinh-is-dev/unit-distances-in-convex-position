@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+# OS / editor
+.DS_Store
+Thumbs.db
+*.swp
+# LaTeX auxiliary
+*.aux
+*.log
+*.out
+*.toc
+*.synctex.gz
+*.fls
+*.fdb_latexmk
+# Local scratch
+scratch/
