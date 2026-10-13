@@ -45,8 +45,9 @@ Full proof: [`mathematics/structural_lemmas.md`, Theorem 10](mathematics/structu
 **Why it matters:** the 1959 conjecture becomes a *local* statement — "some vertex has
 few unit neighbours" — and any improvement over the currently known `2 log₂ n + 8`
 (averaging version of Aggarwal's bound) is genuine progress, whether or not the
-constant is small.  Erdős–Fishburn's `u(P) ≤ 2n` is the intermediate case
-`δ(G) ≤ 4`.
+constant is small.  Concretely: `δ(G) ≤ 4` already gives `U_c(n) ≤ 4n` (settling
+Erdős–Moser), Erdős–Fishburn's `u(P) ≤ 2n` would imply `δ(G) ≤ 4`, and `δ(G) ≤ 3` would
+give `U_c(n) ≤ 3n`.
 
 ### Proof strategy in one paragraph
 
