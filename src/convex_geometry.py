@@ -13,10 +13,21 @@ from fractions import Fraction as F
 from itertools import combinations
 from typing import List, Sequence, Tuple
 
+
 Point = Tuple[F, F]
 
 
 def sub(p: Point, q: Point) -> Point:
+    """Sub.
+    
+    Args:
+        p:
+        q:
+    
+    Returns:
+        tuple: Result of type tuple
+    
+    """
     return (p[0] - q[0], p[1] - q[1])
 
 
@@ -26,6 +37,16 @@ def cross(o: Point, a: Point, b: Point) -> F:
 
 
 def dist2(p: Point, q: Point) -> F:
+    """Dist2.
+    
+    Args:
+        p:
+        q:
+    
+    Returns:
+        The computed result
+    
+    """
     d = sub(p, q)
     return d[0] * d[0] + d[1] * d[1]
 
@@ -104,6 +125,16 @@ def unit_graph(points: Sequence[Point]):
 
 
 def report(points: Sequence[Point], label: str = "") -> str:
+    """Report.
+    
+    Args:
+        points (list):
+        label (str):
+    
+    Returns:
+        The computed result
+    
+    """
     lines = []
     if label:
         lines.append(label)
