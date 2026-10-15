@@ -97,6 +97,13 @@ def symmetric_2k_gon(k: int, lower_arc: list[tuple[F, F]], shifts: list[tuple[F,
 
 
 def certificate(points: list[Point], name: str) -> None:
+    """Certificate.
+    
+    Args:
+        points (list):
+        name:
+    
+    """
     print(report(points, name))
     n = len(points)
     k = n // 2
