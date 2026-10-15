@@ -28,6 +28,16 @@ from src.convex_geometry import (
 
 
 def soft_score(xy: np.ndarray, sigma: float) -> float:
+    """Soft score.
+    
+    Args:
+        xy:
+        sigma:
+    
+    Returns:
+        float: Result of type float
+    
+    """
     diff = xy[:, None, :] - xy[None, :, :]
     d = np.sqrt((diff ** 2).sum(-1))
     iu = np.triu_indices(xy.shape[0], 1)
@@ -35,6 +45,15 @@ def soft_score(xy: np.ndarray, sigma: float) -> float:
 
 
 def convexity_penalty(xy: np.ndarray) -> float:
+    """Convexity penalty.
+    
+    Args:
+        xy:
+    
+    Returns:
+        The computed result
+    
+    """
     n = xy.shape[0]
     pen = 0.0
     order = sorted(range(n), key=lambda i: math.atan2(xy[i][1], xy[i][0]))
@@ -73,9 +92,29 @@ def init_convex(n: int, rng: random.Random) -> np.ndarray:
 
 
 def anneal(n: int, iters: int = 30000, seed: int = 0):
+    """Anneal.
+    
+    Args:
+        n:
+        iters (int):
+        seed (int):
+    
+    Returns:
+        tuple: Result of type tuple
+    
+    """
     rng = random.Random(seed)
 
     def keep_scale(xy: np.ndarray) -> np.ndarray:
+        """Keep scale.
+        
+        Args:
+            xy:
+        
+        Returns:
+            The computed result
+        
+        """
         return xy  # the scale is a free parameter; leave it to the search
 
     xy = keep_scale(init_convex(n, rng))
@@ -98,6 +137,14 @@ def anneal(n: int, iters: int = 30000, seed: int = 0):
 
 
 def run(n_values, iters, seeds):
+    """Worker function for parallel processing.
+    
+    Args:
+        n_values:
+        iters:
+        seeds:
+    
+    """
     print(f"{'n':>3} {'best u(P)':>10} {'u/n':>7} {'2n-7':>6} {'convex':>7}  degrees")
     for n in n_values:
         best, best_xy = 0, None
