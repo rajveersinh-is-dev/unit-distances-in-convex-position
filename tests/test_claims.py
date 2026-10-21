@@ -16,8 +16,6 @@ import sys
 from fractions import Fraction as F
 from itertools import combinations
 
-sys.path.insert(0, ".")
-
 from src.convex_geometry import (
     Point,
     cross,

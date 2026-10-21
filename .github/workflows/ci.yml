@@ -43,6 +43,4 @@ jobs:
 
       - name: Verify scripts compile
         run: |
-          for f in *.py; do
-            python -m py_compile "$f" && echo "OK: $f" || (echo "FAIL: $f"; exit 1)
-          done
+          python -m compileall src/ tests/
