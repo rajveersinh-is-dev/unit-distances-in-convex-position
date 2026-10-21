@@ -25,5 +25,6 @@ classifiers = [
 [project.urls]
 Homepage = "https://github.com/rajveersinh-is-dev/unit-distances-in-convex-position"
 
-[tool.setuptools]
-py-modules = ['']
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["src*"]
