@@ -151,3 +151,33 @@ remains open, and no counterexample or improved extremal bound was obtained.
 
 **What has been proved is what the proof establishes—not what the project hoped to
 establish.**
+
+---
+
+## 14. Fix Test Framework and Add Assertions
+
+**Problem discovered:** The existing test runner (`pytest tests/`) failed entirely due to a missing module import (`src` module not found). Furthermore, the internal custom check function inside `tests/test_claims.py` did not correctly assert failure when the condition was false. It instead appended the failed test case to a global list and merely printed the outcome, meaning typical test suite drivers (like `pytest`) would exit with status zero (pass) even if a test inherently failed.
+
+**Solution implemented:**
+- Initialized `src/` directory as a package by providing an empty `__init__.py`.
+- Added a local `pytest.ini` with `pythonpath = .` ensuring standard package and local imports resolve correctly across all configurations.
+- Modified `check()` in `tests/test_claims.py` to add `assert condition, name`, thereby hard-failing the suite upon any logic failure.
+- Setup basic configuration for `flake8` to handle expected long lines without clogging standard CI.
+
+**Expected and demonstrated benefit:**
+- Fixed `pytest tests/` test suite to exit cleanly on success, fail correctly on logic mismatch, and correctly resolve inner files without environmental hacks.
+- `flake8` and `pylint` are configured to execute predictably for CI checking.
+
+**Verification results:**
+
+| Check or command | Actual outcome | Relevant output or evidence |
+|---|---|---|
+| `pytest tests/` | PASS | `tests/test_claims.py ...... [100%] 6 passed in 0.03s` |
+| `flake8 src/ tests/` | PASS | No output (all ignores respected) |
+| `pylint src/ tests/` | PASS | 9.54/10 rating maintained |
+
+**Next-run priorities:**
+- N/A
+
+**Overall verdict:**
+VERIFIED IMPROVEMENT

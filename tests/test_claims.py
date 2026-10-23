@@ -38,6 +38,7 @@ def check(name: str, condition: bool) -> None:
     if not condition:
         FAILURES.append(name)
     print(f"[{status}] {name}")
+    assert condition, name
 
 
 # ---------------------------------------------------------------- Theorem 3
