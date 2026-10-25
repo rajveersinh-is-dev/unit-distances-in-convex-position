@@ -58,10 +58,13 @@ def convexity_penalty(xy: np.ndarray) -> float:
     pen = 0.0
     order = sorted(range(n), key=lambda i: math.atan2(xy[i][1], xy[i][0]))
     for k in range(n):
-        a, b, c = xy[order[k]], xy[order[(k + 1) % n]], xy[order[(k + 2) % n]]
-        cr = (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0])
-        if cr <= 0:
-            pen += -cr + 1e-3
+        o = xy[order[k]]
+        a = xy[order[(k + 1) % n]]
+        for j in range(2, n):
+            b = xy[order[(k + j) % n]]
+            cr = (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0])
+            if cr <= 0:
+                pen += -cr + 1e-3
     return pen
 
 
