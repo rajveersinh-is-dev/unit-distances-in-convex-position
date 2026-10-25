@@ -64,7 +64,8 @@ def test_theorem3_crossing() -> None:
         # points, which are trivially in convex position
         n_ = len(pts)
         convex = n_ < 3 or all(
-            cross(pts[i], pts[(i + 1) % n_], pts[(i + 2) % n_]) > 0 for i in range(n_)
+            cross(pts[i], pts[(i + 1) % n_], pts[(i + j) % n_]) > 0
+            for i in range(n_) for j in range(2, n_)
         )
         check(f"theorem3: k={k} unit-circle points strictly convex", convex)
         diag = [(i, i + k) for i in range(k)]
@@ -118,10 +119,13 @@ def random_convex(n: int, rng: random.Random) -> list[tuple[float, float]]:
                for i in range(n)]
         ok = True
         for i in range(n):
-            cr = ((pts[(i + 1) % n][0] - pts[i][0]) * (pts[(i + 2) % n][1] - pts[i][1])
-                  - (pts[(i + 1) % n][1] - pts[i][1]) * (pts[(i + 2) % n][0] - pts[i][0]))
-            if cr <= 0:
-                ok = False
+            o = pts[i]
+            a = pts[(i + 1) % n]
+            for j in range(2, n):
+                b = pts[(i + j) % n]
+                cr = ((a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]))
+                if cr <= 0:
+                    ok = False
         if ok:
             return pts
 
@@ -221,11 +225,13 @@ def test_theorem5_circles() -> None:
                for k in range(n)]
         ok = True
         for i in range(n):
-            cr = ((pts[(i + 1) % n][0] - pts[i][0]) * (pts[(i + 2) % n][1] - pts[i][1])
-                  - (pts[(i + 1) % n][1] - pts[i][1])
-                  * (pts[(i + 2) % n][0] - pts[i][0]))
-            if cr <= 0:
-                ok = False
+            o = pts[i]
+            a = pts[(i + 1) % n]
+            for j in range(2, n):
+                b = pts[(i + j) % n]
+                cr = ((a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]))
+                if cr <= 0:
+                    ok = False
         if not ok:
             continue
         trials += 1

@@ -58,9 +58,12 @@ def is_strictly_convex(points: Sequence[Point]) -> bool:
     if n < 3:
         return False
     for i in range(n):
-        o, a, b = points[i], points[(i + 1) % n], points[(i + 2) % n]
-        if cross(o, a, b) <= 0:
-            return False
+        o = points[i]
+        a = points[(i + 1) % n]
+        for j in range(2, n):
+            b = points[(i + j) % n]
+            if cross(o, a, b) <= 0:
+                return False
     return True
 
 
@@ -79,10 +82,13 @@ def is_strictly_convex_float(points: Sequence[Point], tol: float = 1e-9) -> bool
     if n < 3:
         return False
     for i in range(n):
-        o, a, b = points[i], points[(i + 1) % n], points[(i + 2) % n]
-        cr = ((a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]))
-        if float(cr) <= tol:
-            return False
+        o = points[i]
+        a = points[(i + 1) % n]
+        for j in range(2, n):
+            b = points[(i + j) % n]
+            cr = ((a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]))
+            if float(cr) <= tol:
+                return False
     return True
 
 
