@@ -14,20 +14,16 @@ try:  # allow both `python -m src.constructions` and `python src/constructions.p
         Point,
         degrees,
         dist2,
-        is_strictly_convex,
         report,
         segments_cross,
-        unit_pairs,
     )
 except ImportError:  # pragma: no cover - direct script execution
     from convex_geometry import (
         Point,
         degrees,
         dist2,
-        is_strictly_convex,
         report,
         segments_cross,
-        unit_pairs,
     )
 
 

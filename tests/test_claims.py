@@ -13,14 +13,12 @@ from __future__ import annotations
 import math
 import random
 import sys
-from fractions import Fraction as F
 from itertools import combinations
 
 from src.convex_geometry import (
-    Point,
-    cross,
     dist2,
     is_strictly_convex,
+    is_strictly_convex_float,
     segments_cross,
     unit_pairs,
 )
@@ -34,6 +32,7 @@ FAILURES = []
 
 
 def check(name: str, condition: bool) -> None:
+    """Helper function to record and assert test passes/failures."""
     status = "PASS" if condition else "FAIL"
     if not condition:
         FAILURES.append(name)
@@ -57,16 +56,13 @@ def unit_circle_family(k: int, n: int) -> list[tuple[float, float]]:
 
 
 def test_theorem3_crossing() -> None:
+    """Test Theorem 3 assertions regarding unit distances and pairwise crosses."""
     for k in range(1, 9):
         n = 2 * k
         pts = unit_circle_family(k, n)
         # convexity (numerical, tight tolerance); for k = 1 the set has only two
         # points, which are trivially in convex position
-        n_ = len(pts)
-        convex = n_ < 3 or all(
-            cross(pts[i], pts[(i + 1) % n_], pts[(i + j) % n_]) > 0
-            for i in range(n_) for j in range(2, n_)
-        )
+        convex = len(pts) < 3 or is_strictly_convex_float(pts, tol=0.0)
         check(f"theorem3: k={k} unit-circle points strictly convex", convex)
         diag = [(i, i + k) for i in range(k)]
         unit = all(abs(dist2(pts[i], pts[j]) - 1.0) < 1e-9 for i, j in diag)
@@ -84,6 +80,7 @@ def test_theorem3_crossing() -> None:
 
 
 def segments_cross_float(p, q, r, s) -> bool:
+    """Check if segments (p,q) and (r,s) cross, for float coordinates."""
     def cr(o, a, b):
         return ((a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]))
     return (cr(p, q, r) * cr(p, q, s) < 0) and (cr(r, s, p) * cr(r, s, q) < 0)
@@ -92,6 +89,7 @@ def segments_cross_float(p, q, r, s) -> bool:
 # ------------------------------------------------- exact rational constructions
 
 def test_exact_constructions() -> None:
+    """Test that the exact constructions form valid strictly convex polygons with expected unit distances."""
     for name, pts in (("rectangle", rectangle_two_crossing()),
                       ("hexagon", hexagon_three_crossing()),
                       ("octagon", octagon_four_crossing())):
@@ -112,25 +110,18 @@ def test_exact_constructions() -> None:
 # ------------------------------------------- Lemma 1 / Lemma 5 on random tests
 
 def random_convex(n: int, rng: random.Random) -> list[tuple[float, float]]:
+    """Generate a random strictly convex polygon with n vertices."""
     while True:
         ang = rng.uniform(0, 2 * math.pi)
         pts = [((1 + rng.uniform(-0.3, 0.3)) * math.cos(ang + i * 2 * math.pi / n),
                 (1 + rng.uniform(-0.3, 0.3)) * math.sin(ang + i * 2 * math.pi / n))
                for i in range(n)]
-        ok = True
-        for i in range(n):
-            o = pts[i]
-            a = pts[(i + 1) % n]
-            for j in range(2, n):
-                b = pts[(i + j) % n]
-                cr = ((a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]))
-                if cr <= 0:
-                    ok = False
-        if ok:
+        if is_strictly_convex_float(pts, tol=0.0):
             return pts
 
 
 def unit_graph(pts):
+    """Construct an adjacency list for the unit-distance graph."""
     n = len(pts)
     adj = [set() for _ in range(n)]
     for i, j in unit_pairs(pts):
@@ -223,16 +214,7 @@ def test_theorem5_circles() -> None:
         ang0 = rng.uniform(0, 6.28)
         pts = [(math.cos(ang0 + k * step) * r, math.sin(ang0 + k * step) * r)
                for k in range(n)]
-        ok = True
-        for i in range(n):
-            o = pts[i]
-            a = pts[(i + 1) % n]
-            for j in range(2, n):
-                b = pts[(i + j) % n]
-                cr = ((a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]))
-                if cr <= 0:
-                    ok = False
-        if not ok:
+        if not is_strictly_convex_float(pts, tol=0.0):
             continue
         trials += 1
         cnt = 0

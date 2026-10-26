@@ -126,7 +126,7 @@ def solve_h(k: int, l: int, *, interval: Tuple[float, float] | None = None, step
     lo_default = 1e-4
     hi_default = 2.0 * math.pi / k
     lo, hi = interval if interval is not None else (lo_default, hi_default)
-    if not (0 < lo < hi):
+    if not 0 < lo < hi:
         raise ValueError("interval must satisfy 0 < lo < hi")
     if steps <= 0:
         raise ValueError("steps must be a positive integer")
@@ -225,7 +225,7 @@ def _search_best() -> Tuple[int, Tuple[int, int, float, int, int, int] | None]:
     for k in range(1, 9):
         for l in range(1, 13):
             for h in solve_h(k, l):
-                if not (0.05 < h < 1.2):
+                if not 0.05 < h < 1.2:
                     continue
                 for n_out in range(3, 16):
                     for n_in in range(3, 16):
