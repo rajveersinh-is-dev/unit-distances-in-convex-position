@@ -56,7 +56,9 @@ def convexity_penalty(xy: np.ndarray) -> float:
     """
     n = xy.shape[0]
     pen = 0.0
-    order = sorted(range(n), key=lambda i: math.atan2(xy[i][1], xy[i][0]))
+    cx = np.mean(xy[:, 0])
+    cy = np.mean(xy[:, 1])
+    order = sorted(range(n), key=lambda i: math.atan2(xy[i][1] - cy, xy[i][0] - cx))
     for k in range(n):
         o = xy[order[k]]
         a = xy[order[(k + 1) % n]]
