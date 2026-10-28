@@ -19,6 +19,7 @@ import math
 import random
 
 import numpy as np
+import scipy.optimize
 
 from src.convex_geometry import (
     degrees,
@@ -29,14 +30,14 @@ from src.convex_geometry import (
 
 def soft_score(xy: np.ndarray, sigma: float) -> float:
     """Soft score.
-    
+
     Args:
         xy:
         sigma:
-    
+
     Returns:
         float: Result of type float
-    
+
     """
     diff = xy[:, None, :] - xy[None, :, :]
     d = np.sqrt((diff ** 2).sum(-1))
@@ -46,13 +47,13 @@ def soft_score(xy: np.ndarray, sigma: float) -> float:
 
 def convexity_penalty(xy: np.ndarray) -> float:
     """Convexity penalty.
-    
+
     Args:
         xy:
-    
+
     Returns:
         The computed result
-    
+
     """
     n = xy.shape[0]
     pen = 0.0
@@ -97,58 +98,64 @@ def init_convex(n: int, rng: random.Random) -> np.ndarray:
 
 
 def anneal(n: int, iters: int = 30000, seed: int = 0):
-    """Anneal.
-    
+    """Optimize using structured constrained optimization (L-BFGS-B).
+
     Args:
-        n:
-        iters (int):
-        seed (int):
-    
+        n: number of points
+        iters (int): unused, kept for compatibility
+        seed (int): random seed for initialization
+
     Returns:
-        tuple: Result of type tuple
-    
+        tuple: (best_xy, best_v)
     """
     rng = random.Random(seed)
 
     def keep_scale(xy: np.ndarray) -> np.ndarray:
         """Keep scale.
-        
+
         Args:
             xy:
-        
+
         Returns:
             The computed result
-        
+
         """
         return xy  # the scale is a free parameter; leave it to the search
 
     xy = keep_scale(init_convex(n, rng))
-    best_xy, best_v = xy.copy(), 0
-    for it in range(iters):
-        t = it / iters
-        sigma = 0.15 * (1 - t) ** 4 + 1e-4
-        step = 0.3 * (1 - t) ** 2 + 1e-4
-        temp = 0.4 * (1 - t) + 1e-8
-        cand = xy + np.array([[rng.gauss(0, step), rng.gauss(0, step)]
-                                   for _ in range(n)])
-        f_new = soft_score(cand, sigma) - 300.0 * convexity_penalty(cand)
-        f_old = soft_score(xy, sigma) - 300.0 * convexity_penalty(xy)
-        if f_new > f_old or rng.random() < math.exp((f_new - f_old) / temp):
-            xy = cand
-        cnt = len(unit_pairs_float(best_xy, tol=1e-6))
-        if len(unit_pairs_float(xy, tol=1e-6)) > cnt:
-            best_xy, best_v = xy.copy(), len(unit_pairs_float(xy, tol=1e-6))
+    x_flat = xy.flatten()
+
+    def objective(x_flat_arr, sigma):
+        xy_arr = x_flat_arr.reshape((n, 2))
+        score = soft_score(xy_arr, sigma)
+        pen = convexity_penalty(xy_arr)
+        return -(score - 300.0 * pen)
+
+    sigmas = [0.15, 0.05, 0.01, 0.005, 0.001]
+
+    best_xy = xy.copy()
+    best_v = len(unit_pairs_float(best_xy, tol=1e-6))
+
+    for sigma in sigmas:
+        res = scipy.optimize.minimize(objective, x_flat, args=(sigma,), method='L-BFGS-B')
+        x_flat = res.x
+        xy_cand = x_flat.reshape((n, 2))
+        cand_v = len(unit_pairs_float(xy_cand, tol=1e-6))
+        if cand_v > best_v and is_strictly_convex_float(xy_cand):
+            best_v = cand_v
+            best_xy = xy_cand.copy()
+
     return best_xy, best_v
 
 
 def run(n_values, iters, seeds):
     """Worker function for parallel processing.
-    
+
     Args:
         n_values:
         iters:
         seeds:
-    
+
     """
     print(f"{'n':>3} {'best u(P)':>10} {'u/n':>7} {'2n-7':>6} {'convex':>7}  degrees")
     for n in n_values:

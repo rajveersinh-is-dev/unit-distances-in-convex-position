@@ -1,6 +1,8 @@
-import pytest
+"""Convexity tests."""
+
 from fractions import Fraction as F
 from src.convex_geometry import is_strictly_convex, is_strictly_convex_float
+
 
 def test_pentagram_is_not_strictly_convex():
     """A self-intersecting pentagram should not be strictly convex,
@@ -14,6 +16,7 @@ def test_pentagram_is_not_strictly_convex():
     ]
     assert not is_strictly_convex(pts)
 
+
 def test_pentagram_float_is_not_strictly_convex():
     """A self-intersecting pentagram should not be strictly convex (float)."""
     pts = [
@@ -25,6 +28,7 @@ def test_pentagram_float_is_not_strictly_convex():
     ]
     assert not is_strictly_convex_float(pts)
 
+
 def test_collinear_is_not_strictly_convex():
     """Three collinear points should not be strictly convex."""
     pts = [
@@ -35,6 +39,7 @@ def test_collinear_is_not_strictly_convex():
     ]
     assert not is_strictly_convex(pts)
     assert not is_strictly_convex_float([(0.0, 0.0), (1.0, 0.0), (2.0, 0.0), (1.0, 1.0)])
+
 
 def test_simple_convex():
     """A simple triangle should be strictly convex."""
