@@ -20,6 +20,7 @@ import random
 
 import numpy as np
 import scipy.optimize
+import scipy.spatial.distance
 
 from src.convex_geometry import (
     degrees,
@@ -39,10 +40,8 @@ def soft_score(xy: np.ndarray, sigma: float) -> float:
         float: Result of type float
 
     """
-    diff = xy[:, None, :] - xy[None, :, :]
-    d = np.sqrt((diff ** 2).sum(-1))
-    iu = np.triu_indices(xy.shape[0], 1)
-    return float(np.exp(-((d[iu] - 1.0) ** 2) / (2 * sigma ** 2)).sum())
+    d = scipy.spatial.distance.pdist(xy)
+    return float(np.sum(np.exp(-((d - 1.0) ** 2) / (2 * sigma ** 2))))
 
 
 def convexity_penalty(xy: np.ndarray) -> float:
@@ -56,19 +55,26 @@ def convexity_penalty(xy: np.ndarray) -> float:
 
     """
     n = xy.shape[0]
-    pen = 0.0
     cx = np.mean(xy[:, 0])
     cy = np.mean(xy[:, 1])
-    order = sorted(range(n), key=lambda i: math.atan2(xy[i][1] - cy, xy[i][0] - cx))
-    for k in range(n):
-        o = xy[order[k]]
-        a = xy[order[(k + 1) % n]]
-        for j in range(2, n):
-            b = xy[order[(k + j) % n]]
-            cr = (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0])
-            if cr <= 0:
-                pen += -cr + 1e-3
-    return pen
+    angles = np.arctan2(xy[:, 1] - cy, xy[:, 0] - cx)
+    order = np.argsort(angles)
+    xy_sorted = xy[order]
+
+    o = xy_sorted
+    a = np.roll(xy_sorted, -1, axis=0)
+
+    edge = a - o
+    b_to_o = xy_sorted[np.newaxis, :, :] - o[:, np.newaxis, :]
+
+    cr = edge[:, 0:1] * b_to_o[:, :, 1] - edge[:, 1:2] * b_to_o[:, :, 0]
+
+    mask = np.ones((n, n), dtype=bool)
+    np.fill_diagonal(mask, False)
+    mask[np.arange(n), (np.arange(n) + 1) % n] = False
+
+    pen = np.sum(np.where(cr[mask] <= 0, -cr[mask] + 1e-3, 0.0))
+    return float(pen)
 
 
 def init_convex(n: int, rng: random.Random) -> np.ndarray:
