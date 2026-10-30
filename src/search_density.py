@@ -73,7 +73,7 @@ def convexity_penalty(xy: np.ndarray) -> float:
     np.fill_diagonal(mask, False)
     mask[np.arange(n), (np.arange(n) + 1) % n] = False
 
-    pen = np.sum(np.where(cr[mask] <= 0, -cr[mask] + 1e-3, 0.0))
+    pen = np.sum(np.where(cr[mask] <= 0, (-cr[mask] + 1e-3)**2, 0.0))
     return float(pen)
 
 
@@ -82,14 +82,14 @@ def init_convex(n: int, rng: random.Random) -> np.ndarray:
     construction (this is the family that realises the 2n-7 bound), or from a jittered
     circle with unit edges."""
     for _ in range(400):
-        R = rng.uniform(0.55, 4.0)
+        r_out = rng.uniform(0.55, 4.0)
         r_ = rng.uniform(0.55, 4.0)
-        step1 = 2 * math.asin(min(1.0, 1.0 / (2 * R)))
+        step1 = 2 * math.asin(min(1.0, 1.0 / (2 * r_out)))
         step2 = 2 * math.asin(min(1.0, 1.0 / (2 * r_)))
         ang0 = rng.uniform(0, 2 * math.pi)
         phase = math.pi * rng.uniform(-0.5, 0.5)
         n1 = max(2, n // 2)
-        pts = [(R * math.cos(ang0 + k * step1), R * math.sin(ang0 + k * step1))
+        pts = [(r_out * math.cos(ang0 + k * step1), r_out * math.sin(ang0 + k * step1))
                for k in range(n1)]
         pts += [(r_ * math.cos(math.pi + ang0 + phase + k * step2),
                  r_ * math.sin(math.pi + ang0 + phase + k * step2))
@@ -103,12 +103,11 @@ def init_convex(n: int, rng: random.Random) -> np.ndarray:
                       math.sin(ang + k * 2 * math.pi / n)) for k in range(n)])
 
 
-def anneal(n: int, iters: int = 30000, seed: int = 0):
+def anneal(n: int, seed: int = 0):
     """Optimize using structured constrained optimization (L-BFGS-B).
 
     Args:
         n: number of points
-        iters (int): unused, kept for compatibility
         seed (int): random seed for initialization
 
     Returns:
@@ -154,12 +153,11 @@ def anneal(n: int, iters: int = 30000, seed: int = 0):
     return best_xy, best_v
 
 
-def run(n_values, iters, seeds):
+def run(n_values, seeds):
     """Worker function for parallel processing.
 
     Args:
         n_values:
-        iters:
         seeds:
 
     """
@@ -167,7 +165,7 @@ def run(n_values, iters, seeds):
     for n in n_values:
         best, best_xy = 0, None
         for s in range(seeds):
-            xy, v = anneal(n, iters=iters, seed=s)
+            xy, v = anneal(n, seed=s)
             v = len(unit_pairs_float(xy, tol=1e-6))
             if v > best:
                 best, best_xy = v, xy
@@ -178,4 +176,4 @@ def run(n_values, iters, seeds):
 
 
 if __name__ == "__main__":
-    run(n_values=list(range(6, 15)), iters=8000, seeds=3)
+    run(n_values=list(range(6, 15)), seeds=3)
