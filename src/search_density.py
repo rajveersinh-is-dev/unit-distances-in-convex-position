@@ -73,7 +73,7 @@ def convexity_penalty(xy: np.ndarray) -> float:
     np.fill_diagonal(mask, False)
     mask[np.arange(n), (np.arange(n) + 1) % n] = False
 
-    pen = np.sum(np.where(cr[mask] <= 0, (-cr[mask] + 1e-3)**2, 0.0))
+    pen = np.sum(np.where(cr[mask] <= 1e-3, (-cr[mask] + 1e-3)**2, 0.0))
     return float(pen)
 
 
