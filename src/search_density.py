@@ -55,17 +55,11 @@ def convexity_penalty(xy: np.ndarray) -> float:
 
     """
     n = xy.shape[0]
-    cx = np.mean(xy[:, 0])
-    cy = np.mean(xy[:, 1])
-    angles = np.arctan2(xy[:, 1] - cy, xy[:, 0] - cx)
-    order = np.argsort(angles)
-    xy_sorted = xy[order]
-
-    o = xy_sorted
-    a = np.roll(xy_sorted, -1, axis=0)
+    o = xy
+    a = np.roll(xy, -1, axis=0)
 
     edge = a - o
-    b_to_o = xy_sorted[np.newaxis, :, :] - o[:, np.newaxis, :]
+    b_to_o = xy[np.newaxis, :, :] - o[:, np.newaxis, :]
 
     cr = edge[:, 0:1] * b_to_o[:, :, 1] - edge[:, 1:2] * b_to_o[:, :, 0]
 
