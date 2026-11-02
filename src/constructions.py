@@ -61,12 +61,12 @@ def hexagon_three_crossing() -> list[Point]:
 
 def octagon_four_crossing() -> list[Point]:
     """Convex octagon whose four main diagonals all have length 1 (exact)."""
-    h, H = F(2, 5), F(1, 2)
+    h_small, h_large = F(2, 5), F(1, 2)
     u, v = F(3, 5), F(4, 5)
     z1 = (F(0), F(0))
-    z2 = (F(3, 10), -h)
-    z3 = (F(1, 2), -H)
-    z4 = (F(7, 10), -h)
+    z2 = (F(3, 10), -h_small)
+    z3 = (F(1, 2), -h_large)
+    z4 = (F(7, 10), -h_small)
     z5 = (F(1), F(0))
     z6 = (z2[0] + u, z2[1] + v)
     z7 = (z3[0], z3[1] + F(1))
@@ -74,7 +74,9 @@ def octagon_four_crossing() -> list[Point]:
     return [z1, z2, z3, z4, z5, z6, z7, z8]
 
 
-def symmetric_2k_gon(k: int, lower_arc: list[tuple[F, F]], shifts: list[tuple[F, F]]) -> list[Point]:
+def symmetric_2k_gon(
+    k: int, lower_arc: list[tuple[F, F]], shifts: list[tuple[F, F]]
+) -> list[Point]:
     """Assemble the symmetric 2k-gon from a lower chain and unit shifts.
 
     `lower_arc` lists the interior points z_2..z_k of the lower chain (already

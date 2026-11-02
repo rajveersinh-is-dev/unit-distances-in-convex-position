@@ -1,7 +1,10 @@
-import pytest
+"""Tests for grid-aligned two-circle lens constructions."""
+
 import math
+import pytest
 
 from src.aligned_lens import f_of_h, solve_h, build
+
 
 def test_f_of_h():
     """Test f_of_h raises ValueError on invalid inputs and returns correct values for valid."""
@@ -17,6 +20,7 @@ def test_f_of_h():
     val = f_of_h(0.698132, 8, 2)
     assert abs(val) < 1e-3
 
+
 def test_solve_h():
     """Test solve_h returns valid roots."""
     roots = solve_h(8, 2)
@@ -29,6 +33,7 @@ def test_solve_h():
 
     with pytest.raises(ValueError):
         solve_h(8, 2, interval=(1.0, 0.5))
+
 
 def test_build():
     """Test build creates correctly sized lists of points."""
@@ -45,4 +50,4 @@ def test_build():
     # Points should be ordered counter-clockwise by polar angle
     angles = [math.atan2(p[1], p[0]) for p in pts]
     for i in range(1, len(angles)):
-        assert angles[i] >= angles[i-1] - 1e-9
+        assert angles[i] >= angles[i - 1] - 1e-9

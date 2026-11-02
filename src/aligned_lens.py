@@ -93,14 +93,37 @@ def f_of_h(h: float, k: int, l: int) -> float:
         # This would lead to division by zero – treat as an invalid configuration.
         raise ValueError("sin(k·h/2) and sin(h/2) must be non‑zero")
 
-    R = 1.0 / (2.0 * sin_kh_half)
-    r = 1.0 / (2.0 * sin_h_half)
-    c = (R * R + r * r - 1.0) / (2.0 * R * r)
+    r_out = 1.0 / (2.0 * sin_kh_half)
+    r_in = 1.0 / (2.0 * sin_h_half)
+    c = (r_out * r_out + r_in * r_in - 1.0) / (2.0 * r_out * r_in)
     c = _clamp(c)  # protect against tiny numerical overshoots
     return math.acos(c) - (l * h) / 2.0
 
 
-def solve_h(k: int, l: int, *, interval: Tuple[float, float] | None = None, steps: int = 4000) -> List[float]:
+def _bisect_root(a: float, b: float, k: int, l: int) -> float:
+    """Helper to find root by bisection on an interval [a, b]."""
+    for _ in range(_MAX_ITER_BISECT):
+        m = (a + b) / 2.0
+        fm = f_of_h(m, k, l)
+        if abs(fm) < _TOL_BISECT:
+            a, b = m, m
+            break
+        if f_of_h(a, k, l) * fm <= 0:
+            b = m
+        else:
+            a = m
+        if b - a < _TOL_BISECT:
+            break
+    return (a + b) / 2.0
+
+
+def solve_h(
+    k: int,
+    l: int,
+    *,
+    interval: Tuple[float, float] | None = None,
+    steps: int = 4000
+) -> List[float]:
     """Find all roots of :func:`f_of_h` on ``(0, 2π/k)``.
 
     The algorithm samples the interval uniformly, detects sign changes and
@@ -111,8 +134,8 @@ def solve_h(k: int, l: int, *, interval: Tuple[float, float] | None = None, step
     k, l:
         Positive integer parameters of the construction.
     interval:
-        Optional custom interval ``(lo, hi)``.  If omitted the default
-        ``(1e‑4, 2π/k)`` is used.  ``lo`` must be ``> 0`` and ``hi`` must be ``> lo``.
+        Optional custom interval ``(lo, hi)``.  If omitted the default ``(1e‑4, 2π/k)``
+        is used.  ``lo`` must be ``> 0`` and ``hi`` must be ``> lo``.
     steps:
         Number of uniform samples used for the initial sign‑change scan.
 
@@ -132,28 +155,14 @@ def solve_h(k: int, l: int, *, interval: Tuple[float, float] | None = None, step
         raise ValueError("steps must be a positive integer")
 
     roots: List[float] = []
-    prev_x = lo
-    prev_v = f_of_h(prev_x, k, l)
+    p_x = lo
+    p_v = f_of_h(p_x, k, l)
     for i in range(1, steps + 1):
         x = lo + (hi - lo) * i / steps
         v = f_of_h(x, k, l)
-        if prev_v * v < 0:  # sign change detected
-            a, b = prev_x, x
-            # Bisection refinement
-            for _ in range(_MAX_ITER_BISECT):
-                m = (a + b) / 2.0
-                fm = f_of_h(m, k, l)
-                if abs(fm) < _TOL_BISECT:
-                    a, b = m, m
-                    break
-                if f_of_h(a, k, l) * fm <= 0:
-                    b = m
-                else:
-                    a = m
-                if b - a < _TOL_BISECT:
-                    break
-            roots.append((a + b) / 2.0)
-        prev_x, prev_v = x, v
+        if p_v * v < 0:
+            roots.append(_bisect_root(p_x, x, k, l))
+        p_x, p_v = x, v
     roots.sort()
     return roots
 
@@ -188,24 +197,42 @@ def build(h: float, k: int, l: int, n_out: int, n_in: int) -> List[Tuple[float, 
     if sin_kh_half == 0 or sin_h_half == 0:
         raise ValueError("Invalid h leading to division by zero in radius computation")
 
-    R = 1.0 / (2.0 * sin_kh_half)
-    r = 1.0 / (2.0 * sin_h_half)
+    r_out = 1.0 / (2.0 * sin_kh_half)
+    r_in = 1.0 / (2.0 * sin_h_half)
     alpha = l * h / 2.0
 
     # Outer circle points – spaced by ``k·h``.
     outer = [
-        (R * math.cos(j * k * h), R * math.sin(j * k * h))
+        (r_out * math.cos(j * k * h), r_out * math.sin(j * k * h))
         for j in range(n_out)
     ]
     # Inner circle points – start at offset ``alpha``.
     inner = [
-        (r * math.cos(alpha + i * h), r * math.sin(alpha + i * h))
+        (r_in * math.cos(alpha + i * h), r_in * math.sin(alpha + i * h))
         for i in range(n_in)
     ]
     pts = outer + inner
     # Sort by polar angle to obtain a proper polygon ordering.
     pts.sort(key=lambda p: math.atan2(p[1], p[0]))
     return pts
+
+
+def _evaluate_configuration(
+    h: float, k: int, l: int, best_u: int
+) -> Tuple[int, Tuple[int, int, float, int, int, int] | None]:
+    """Helper to evaluate a specific configuration block."""
+    cur_best_u = best_u
+    best_params = None
+    for n_out in range(3, 16):
+        for n_in in range(3, 16):
+            pts = build(h, k, l, n_out, n_in)
+            if not is_strictly_convex_float(pts):
+                continue
+            u = len(unit_pairs_float(pts, tol=1e-6))
+            if u > cur_best_u:
+                cur_best_u = u
+                best_params = (k, l, round(h, 6), n_out, n_in, len(pts))
+    return cur_best_u, best_params
 
 
 def _search_best() -> Tuple[int, Tuple[int, int, float, int, int, int] | None]:
@@ -227,16 +254,10 @@ def _search_best() -> Tuple[int, Tuple[int, int, float, int, int, int] | None]:
             for h in solve_h(k, l):
                 if not 0.05 < h < 1.2:
                     continue
-                for n_out in range(3, 16):
-                    for n_in in range(3, 16):
-                        pts = build(h, k, l, n_out, n_in)
-                        if not is_strictly_convex_float(pts):
-                            continue
-                        u = len(unit_pairs_float(pts, tol=1e-6))
-                        n = len(pts)
-                        if u > best_u:
-                            best_u = u
-                            best_params = (k, l, round(h, 6), n_out, n_in, n)
+                u_val, params = _evaluate_configuration(h, k, l, best_u)
+                if u_val > best_u:
+                    best_u = u_val
+                    best_params = params
     return best_u, best_params
 
 

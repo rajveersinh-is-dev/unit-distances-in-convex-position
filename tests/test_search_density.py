@@ -1,3 +1,5 @@
+"""Tests for numerical search density."""
+
 import random
 import numpy as np
 
@@ -33,6 +35,7 @@ def test_init_convex():
     xy = init_convex(6, rng)
     assert xy.shape == (6, 2)
     assert convexity_penalty(xy) == 0.0
+
 
 def test_anneal():
     """Test the anneal optimization loop."""

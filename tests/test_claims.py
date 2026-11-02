@@ -89,7 +89,8 @@ def segments_cross_float(p, q, r, s) -> bool:
 # ------------------------------------------------- exact rational constructions
 
 def test_exact_constructions() -> None:
-    """Test that the exact constructions form valid strictly convex polygons with expected unit distances."""
+    """Test that the exact constructions form valid strictly convex polygons with
+    expected unit distances."""
     for name, pts in (("rectangle", rectangle_two_crossing()),
                       ("hexagon", hexagon_three_crossing()),
                       ("octagon", octagon_four_crossing())):
@@ -113,9 +114,13 @@ def random_convex(n: int, rng: random.Random) -> list[tuple[float, float]]:
     """Generate a random strictly convex polygon with n vertices."""
     while True:
         ang = rng.uniform(0, 2 * math.pi)
-        pts = [((1 + rng.uniform(-0.3, 0.3)) * math.cos(ang + i * 2 * math.pi / n),
-                (1 + rng.uniform(-0.3, 0.3)) * math.sin(ang + i * 2 * math.pi / n))
-               for i in range(n)]
+        pts = [
+            (
+                (1 + rng.uniform(-0.3, 0.3)) * math.cos(ang + i * 2 * math.pi / n),
+                (1 + rng.uniform(-0.3, 0.3)) * math.sin(ang + i * 2 * math.pi / n),
+            )
+            for i in range(n)
+        ]
         if is_strictly_convex_float(pts, tol=0.0):
             return pts
 
