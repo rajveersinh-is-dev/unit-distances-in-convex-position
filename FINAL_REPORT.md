@@ -21,14 +21,26 @@
    - **Files affected:** `tests/test_search_density.py`, `tests/test_aligned_lens.py`.
    - **Expected and demonstrated benefit:** Validated inputs constraints, boundary conditions, and confirmed the fixes from above reliably.
 
+
+3. **Fixed Maintainability and Code Quality Issues across the repository.**
+   - **Problem discovered:** `pylint` and `flake8` reported multiple issues. `src/aligned_lens.py` had `too-many-locals`, `too-many-nested-blocks`, `invalid-name`, and `line-too-long`. `src/constructions.py` had `invalid-name` and `line-too-long`. Test files (`test_aligned_lens.py`, `test_search_density.py`, `test_claims.py`) were missing docstrings, had incorrect spacing, order of imports, and line lengths issues.
+   - **Root cause:** Incremental development introduced some complex routines (e.g. monolithic evaluation loops in `_search_best`) and non-PEP8 variable names like `H` or `R` which represent geometric properties but trigger linters.
+   - **Solution implemented:**
+     - Refactored `_search_best` in `src/aligned_lens.py` by extracting inner loops to `_evaluate_configuration`.
+     - Extracted `_bisect_root` in `solve_h` to reduce local variables count.
+     - Renamed variables (`R` -> `r_out`, `r` -> `r_in`, `H` -> `h_large`, `h` -> `h_small`) to conform with snake_case.
+     - Added missing module docstrings and fixed all `flake8` spacing and line-length issues.
+   - **Files affected:** `src/aligned_lens.py`, `src/constructions.py`, `tests/test_aligned_lens.py`, `tests/test_search_density.py`, `tests/test_claims.py`.
+   - **Expected and demonstrated benefit:** Achieved a clean codebase with 10.00/10 rating in `pylint` and passing all `flake8` rules without any warnings. Code readability and structural complexity is heavily improved.
+
 ## C. Verification results
 
 | Check or command | Actual outcome | Relevant output or evidence | Explanation of limitation |
 | :--- | :--- | :--- | :--- |
 | `python -m pytest tests/` | PASS | `18 passed in 1.1s` | All existing tests pass. |
 | `python -m src.search_density` | PASS | Script runs successfully and returns valid convex configurations. | Ensures numerical search still functions. |
-| `flake8 src/ tests/` | PASS | No new lint errors. | |
-| `pylint src/ tests/` | PASS | Maintained rating over 9.8/10. | |
+| `flake8 src/ tests/` | PASS | 0 errors. Fully clean. | |
+| `pylint src/ tests/` | PASS | Code rated at 10.00/10. | |
 
 ## D. Measurable impact
 
@@ -44,8 +56,8 @@
 ## F. Next-run priorities
 
 1. Improve exact arithmetic and coordinate tests in `tests/test_claims.py`.
-2. Refactor `src/aligned_lens.py` to simplify `_search_best` and `f_of_h` functions (addressing Pylint complexity warnings).
-3. Investigate if replacing L-BFGS-B with another algorithm or tweaking annealing schedules yields better local minima.
+2. Investigate if replacing L-BFGS-B with another algorithm or tweaking annealing schedules yields better local minima.
+3. Investigate if generating point configurations sequentially by adding points bounded by the intersection of half-planes is more efficient than checking full strict convexity after generation.
 
 ## G. Overall verdict
 
