@@ -1,7 +1,7 @@
 """Convexity tests."""
 
 from fractions import Fraction as F
-from src.convex_geometry import is_strictly_convex, is_strictly_convex_float
+from src.convex_geometry import is_strictly_convex, is_strictly_convex_float, degrees, report
 
 
 def test_pentagram_is_not_strictly_convex():
@@ -50,3 +50,31 @@ def test_simple_convex():
     ]
     assert is_strictly_convex(pts)
     assert is_strictly_convex_float([(0.0, 0.0), (1.0, 0.0), (0.0, 1.0)])
+
+
+def test_edge_cases_n_less_than_3():
+    """Convexity tests for n < 3 should return False."""
+    assert not is_strictly_convex([])
+    assert not is_strictly_convex([(F(0), F(0))])
+    assert not is_strictly_convex([(F(0), F(0)), (F(1), F(0))])
+
+    assert not is_strictly_convex_float([])
+    assert not is_strictly_convex_float([(0.0, 0.0)])
+    assert not is_strictly_convex_float([(0.0, 0.0), (1.0, 0.0)])
+
+
+def test_degrees_and_report():
+    """Test degrees and report with a simple geometry."""
+    pts = [
+        (F(0), F(0)),
+        (F(1), F(0)),
+        (F(0), F(1)),
+    ]
+    deg = degrees(pts)
+    assert deg == [2, 1, 1]  # distance between (1,0) and (0,1) is not 1 (it's 2, so sqrt(2))
+
+    rep = report(pts, "triangle")
+    assert "triangle" in rep
+    assert "n = 3" in rep
+    assert "strictly convex: True" in rep
+    assert "unit-degree sequence" in rep

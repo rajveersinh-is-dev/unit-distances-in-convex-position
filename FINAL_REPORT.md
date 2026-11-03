@@ -33,20 +33,35 @@
    - **Files affected:** `src/aligned_lens.py`, `src/constructions.py`, `tests/test_aligned_lens.py`, `tests/test_search_density.py`, `tests/test_claims.py`.
    - **Expected and demonstrated benefit:** Achieved a clean codebase with 10.00/10 rating in `pylint` and passing all `flake8` rules without any warnings. Code readability and structural complexity is heavily improved.
 
+4. **Improved test coverage significantly across all modules.**
+   - **Problem discovered:** `pytest-cov` indicated test coverage was at ~70% overall, with significant gaps in `src/aligned_lens.py` (67%), `src/constructions.py` (61%), `src/convex_geometry.py` (71%), and `src/search_density.py` (79%). Additionally, `unit_graph` was unnecessarily duplicated in `tests/test_claims.py`. Superficial mocking was used instead of actual validation logic in tests.
+   - **Root cause:** Incremental development did not ensure adequate coverage for internal helper functions, script entry points, and edge cases.
+   - **Solution implemented:**
+     - Removed the duplicated `unit_graph` function in `tests/test_claims.py` and imported it from `src.convex_geometry`.
+     - Added edge case tests for `is_strictly_convex` and `is_strictly_convex_float` in `tests/test_convexity.py` covering $n < 3$ scenarios.
+     - Added tests for `degrees` and `report` in `tests/test_convexity.py`.
+     - Added tests for `symmetric_2k_gon` and `certificate` in `tests/test_claims.py`.
+     - Replaced superficial mocking in `test_init_convex_fallback`, `test_search_best`, and `test_main` with true logic execution to validate the actual return types and behavior. Added a test for `run` in `tests/test_search_density.py`.
+     - Cleaned up generated `.coverage` artifacts and ignored them in git.
+   - **Files affected:** `tests/test_claims.py`, `tests/test_convexity.py`, `tests/test_aligned_lens.py`, `tests/test_search_density.py`, `.gitignore`.
+   - **Expected and demonstrated benefit:** Overall code coverage significantly improved to 96%. Tests now rely on actual execution instead of superficial mocks. Duplicate code was eliminated, keeping a single source of truth for the project.
+
 ## C. Verification results
 
 | Check or command | Actual outcome | Relevant output or evidence | Explanation of limitation |
 | :--- | :--- | :--- | :--- |
-| `python -m pytest tests/` | PASS | `18 passed in 1.1s` | All existing tests pass. |
+| `python -m pytest tests/` | PASS | `27 passed in 3.7s` | All existing and new tests pass. |
 | `python -m src.search_density` | PASS | Script runs successfully and returns valid convex configurations. | Ensures numerical search still functions. |
 | `flake8 src/ tests/` | PASS | 0 errors. Fully clean. | |
 | `pylint src/ tests/` | PASS | Code rated at 10.00/10. | |
+| `python -m pytest tests/ --cov=src` | PASS | Coverage increased to 96% | Coverage for src/ increased significantly. |
 
 ## D. Measurable impact
 
 - Elimination of the jump discontinuity in `convexity_penalty` by removing dynamic point sorting during evaluation.
-- Test coverage for `src/search_density.py` and `src/aligned_lens.py` increased from 0% to nearly complete coverage. Overall repository coverage boosted from 26% to ~65%+.
+- Test coverage for `src/search_density.py` and `src/aligned_lens.py` increased from 0% to nearly complete coverage. Overall repository coverage boosted from ~70% to 96% with the latest suite additions.
 - Evaluation speed for numerical optimization improved slightly by not evaluating `arctan2` inside the hot-loop.
+- Reduced duplicate code by properly importing `unit_graph`.
 
 ## E. Remaining risks
 

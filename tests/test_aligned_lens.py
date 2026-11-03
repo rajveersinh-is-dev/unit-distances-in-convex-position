@@ -3,7 +3,7 @@
 import math
 import pytest
 
-from src.aligned_lens import f_of_h, solve_h, build
+from src.aligned_lens import f_of_h, solve_h, build, _evaluate_configuration, _search_best, main
 
 
 def test_f_of_h():
@@ -51,3 +51,42 @@ def test_build():
     angles = [math.atan2(p[1], p[0]) for p in pts]
     for i in range(1, len(angles)):
         assert angles[i] >= angles[i - 1] - 1e-9
+
+
+def test_evaluate_configuration():
+    # Evaluate a configuration that we know fails convexity or produces some unit distances
+    best_u, best_params = _evaluate_configuration(0.698132, 8, 2, 0)
+    assert best_u >= 0
+
+
+def test_search_best():
+    """Test that _search_best performs the search and finds a valid best configuration."""
+    best_u, best_params = _search_best()
+    assert best_u > 0
+    assert best_params is not None
+    k, l, h, n_out, n_in, n = best_params
+    assert k > 0
+    assert l > 0
+    assert h > 0
+    assert n_out >= 3
+    assert n_in >= 3
+    assert n == n_out + n_in
+
+
+def test_main():
+    """Test the main entry point without mocking to verify real execution."""
+    import io
+    import sys
+
+    old_stdout = sys.stdout
+    new_stdout = io.StringIO()
+    sys.stdout = new_stdout
+    try:
+        main()
+        out = new_stdout.getvalue()
+    finally:
+        sys.stdout = old_stdout
+
+    assert "best unit count" in out
+    assert "params (k, l, h, n_out, n_in, n)" in out
+    assert "degrees:" in out

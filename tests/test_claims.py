@@ -21,11 +21,14 @@ from src.convex_geometry import (
     is_strictly_convex_float,
     segments_cross,
     unit_pairs,
+    unit_graph,
 )
 from src.constructions import (
     hexagon_three_crossing,
     octagon_four_crossing,
     rectangle_two_crossing,
+    symmetric_2k_gon,
+    certificate,
 )
 
 FAILURES = []
@@ -108,6 +111,37 @@ def test_exact_constructions() -> None:
               f"degrees = {[sum(1 for e in unit_pairs(pts) if i in e) for i in range(n)]}")
 
 
+def test_symmetric_2k_gon():
+    from fractions import Fraction as F
+    # For a rectangle (k=2):
+    # z_1 = (0, 0), z_3 = (1, 0).
+    # Inner point of the lower chain:
+    lower_arc = [(F(1, 2), F(-1, 2))]
+    # Shifts to create the upper points
+    shifts = [(F(0), F(1))]
+    pts = symmetric_2k_gon(2, lower_arc, shifts)
+    assert len(pts) == 4
+    assert is_strictly_convex(pts)
+
+
+def test_certificate():
+    import io
+    import sys
+
+    old_stdout = sys.stdout
+    new_stdout = io.StringIO()
+    sys.stdout = new_stdout
+    try:
+        certificate(rectangle_two_crossing(), "RECTANGLE TEST")
+        out = new_stdout.getvalue()
+    finally:
+        sys.stdout = old_stdout
+
+    assert "RECTANGLE TEST" in out
+    assert "n = 4" in out
+    assert "all main diagonals unit: True" in out
+
+
 # ------------------------------------------- Lemma 1 / Lemma 5 on random tests
 
 def random_convex(n: int, rng: random.Random) -> list[tuple[float, float]]:
@@ -123,16 +157,6 @@ def random_convex(n: int, rng: random.Random) -> list[tuple[float, float]]:
         ]
         if is_strictly_convex_float(pts, tol=0.0):
             return pts
-
-
-def unit_graph(pts):
-    """Construct an adjacency list for the unit-distance graph."""
-    n = len(pts)
-    adj = [set() for _ in range(n)]
-    for i, j in unit_pairs(pts):
-        adj[i].add(j)
-        adj[j].add(i)
-    return adj
 
 
 def test_lemma1_common_neighbours() -> None:
