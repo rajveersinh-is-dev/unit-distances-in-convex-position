@@ -17,3 +17,4 @@ Thumbs.db
 *.fdb_latexmk
 # Local scratch
 scratch/
+.coverage
