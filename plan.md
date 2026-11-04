@@ -1,15 +1,10 @@
-1. **Analyze Priority Issues:**
-   The `FINAL_REPORT.md` states under "Next-run priorities":
-   - "Investigate if generating point configurations sequentially by adding points bounded by the intersection of half-planes is more efficient than checking full strict convexity after generation."
-   - "Consider replacing the `convexity_penalty` in `search_density.py` with a more rigorous penalty function since the optimization now permits a higher computational budget."
-
-2. **Improve `convexity_penalty` in `search_density.py`:**
-   We can make it smoother for the L-BFGS-B optimizer. Currently, the penalty uses `np.where(cr[mask] <= 0, -cr[mask] + 1e-3, 0.0)`. Squaring the penalty `(-cr[mask] + 1e-3)**2` makes it differentiable at the boundary, which is much better for gradient-based optimization like L-BFGS-B. The test showed `(-cr[mask] + 1e-3)**2` with removing the `xy_sorted` overhead was significantly faster (0.43s vs 0.58s) and gave the same or better results. I will implement a faster and smoother penalty.
-   Furthermore, I'll update it to not require sorting the polygon points inside the penalty function. If we assume the optimizer updates points slowly, they remain somewhat in order, but to be robust, sorting them by angles is okay, but `xy_sorted` overhead is minimal. Wait, sorting by angles around the centroid might break if it's not convex. But actually, the penalty function is designed to penalize non-convexity. I'll change it to use a squared penalty `np.sum(np.where(cr[mask] <= 0, (-cr[mask] + 1e-3)**2, 0.0))` to make it continuous and differentiable for the L-BFGS-B optimizer, which requires smooth objective functions to calculate gradients correctly.
-
-3. **Verify Changes:**
-   Run `pytest tests/`, `flake8`, `pylint`, and `python -m src.search_density` to verify tests pass and no regression occurs. Update `FINAL_REPORT.md`.
-
-4. **Complete Pre-Commit Steps:** Ensure verification is completed safely.
-
-5. **Submit.**
+1. **Fix Pylint warnings in test files**: Move imports to the top level, add missing docstrings, and remove unused variables/reimports in `test_aligned_lens.py`, `test_claims.py`, and `test_search_density.py`.
+2. **Increase coverage in `src/aligned_lens.py`**: Add tests for the `ValueError` exception paths in `f_of_h`, `solve_h`, and `build` (e.g., `sin(h/2) == 0`, `k <= 0`, `interval` checks).
+3. **Increase coverage in `src/search_density.py`**: Add tests to cover lines for the fallback generation loop (by mocking `is_strictly_convex_float`) and the `best_xy is None` logic in `run`.
+4. **Improve coverage in `tests/test_claims.py`**:
+   - Add a test for `random_convex` to ensure it generates valid strictly convex polygons.
+   - Test `unit_circle_family` with `n > 2 * k` to cover the extra points logic.
+   - Refactor the verification part of `test_lemma5_neighbourhood_structure` into a helper function so that invalid graphs can be tested, achieving branch coverage for the falsification logic.
+   - Ensure the `check` function is tested by intentionally triggering and catching a failure.
+5. **Complete pre commit steps**: Ensure proper testing, verification, review, and reflection are done by running all checks (`pytest`, `flake8`, `pylint`, and `coverage`).
+6. **Submit**: Once all tests pass and coverage reaches ~100%, submit the final code and update the baseline report.
