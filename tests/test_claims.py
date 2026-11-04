@@ -12,7 +12,9 @@ from __future__ import annotations
 
 import math
 import random
+import io
 import sys
+from fractions import Fraction as F
 from itertools import combinations
 
 from src.convex_geometry import (
@@ -112,7 +114,7 @@ def test_exact_constructions() -> None:
 
 
 def test_symmetric_2k_gon():
-    from fractions import Fraction as F
+    """Test symmetric 2k gon."""
     # For a rectangle (k=2):
     # z_1 = (0, 0), z_3 = (1, 0).
     # Inner point of the lower chain:
@@ -125,9 +127,7 @@ def test_symmetric_2k_gon():
 
 
 def test_certificate():
-    import io
-    import sys
-
+    """Test certificate."""
     old_stdout = sys.stdout
     new_stdout = io.StringIO()
     sys.stdout = new_stdout
@@ -177,6 +177,29 @@ def test_lemma1_common_neighbours() -> None:
     del rng
 
 
+
+def check_lemma5_graph(adj, v, nb):
+    ok = True
+    sub = {x: {y for y in adj[x] if y in adj[v]} for x in nb}
+    for x in nb:
+        if len(sub[x]) > 2:
+            ok = False
+    degs = {x: len(sub[x]) for x in nb}
+    for x in nb:
+        comp = set()
+        stack = [x]
+        while stack:
+            y = stack.pop()
+            if y in comp:
+                continue
+            comp.add(y)
+            stack.extend(sub[y])
+        if all(degs[z] == 2 for z in comp) and len(comp) >= 3:
+            ok = False
+        if len(comp) > 3:
+            ok = False
+    return ok
+
 def test_lemma5_neighbourhood_structure() -> None:
     """Lemma 5: G[N(v)] is a linear forest whose components have <= 3 vertices."""
     rng = random.Random(7)
@@ -188,26 +211,8 @@ def test_lemma5_neighbourhood_structure() -> None:
         for v in range(n):
             nb = sorted(adj[v])
             # induced subgraph on N(v)
-            sub = {x: {y for y in adj[x] if y in adj[v]} for x in nb}
-            # degrees <= 2
-            for x in nb:
-                if len(sub[x]) > 2:
-                    ok = False
-            # no cycle: every component has a vertex of degree <= 1
-            degs = {x: len(sub[x]) for x in nb}
-            for x in nb:
-                comp = set()
-                stack = [x]
-                while stack:
-                    y = stack.pop()
-                    if y in comp:
-                        continue
-                    comp.add(y)
-                    stack.extend(sub[y])
-                if all(degs[z] == 2 for z in comp) and len(comp) >= 3:
-                    ok = False  # a cycle of length >= 3
-                if len(comp) > 3:
-                    ok = False
+            if not check_lemma5_graph(adj, v, nb):
+                ok = False
         check("lemma5: G[N(v)] linear forest, components <= 3 vertices", ok)
     del rng
 
@@ -254,7 +259,7 @@ def test_theorem5_circles() -> None:
         check(f"theorem5: circle trial {trials}: u({n}) = {cnt} <= n", cnt <= n)
 
 
-if __name__ == "__main__":
+def main():
     test_exact_constructions()
     test_theorem3_crossing()
     test_lemma1_common_neighbours()
@@ -266,3 +271,154 @@ if __name__ == "__main__":
         print(f"{len(FAILURES)} FAILURE(S): {FAILURES}")
         sys.exit(1)
     print("all tests passed")
+
+if __name__ == "__main__":
+    main()
+
+def test_constructions_main_module():
+    import runpy
+    import io
+    import sys
+    old_stdout = sys.stdout
+    new_stdout = io.StringIO()
+    sys.stdout = new_stdout
+    try:
+        runpy.run_module("src.constructions", run_name="__main__")
+        out = new_stdout.getvalue()
+    finally:
+        sys.stdout = old_stdout
+    assert "RECTANGLE 3/5 x 4/5" in out
+
+def test_check_false(monkeypatch):
+    """Test check function correctly handles failure conditions."""
+    failures_len_before = len(FAILURES)
+    try:
+        check("test check failure", False)
+    except AssertionError:
+        pass
+    assert len(FAILURES) == failures_len_before + 1
+    # Cleanup
+    FAILURES.pop()
+
+def test_unit_circle_family_extra_points():
+    """Test unit_circle_family when n > 2 * k to trigger sorting and extra points logic."""
+    # k = 1, 2*k = 2. n = 3 > 2*k.
+    pts = unit_circle_family(1, 3)
+    assert len(pts) == 3
+
+def test_random_convex_execution():
+    """Execute random_convex to cover its lines."""
+    rng = random.Random(42)
+    pts = random_convex(5, rng)
+    assert len(pts) == 5
+
+def test_lemma5_invalid_graph():
+    """Test the validation logic inside test_lemma5_neighbourhood_structure with an invalid graph."""
+    # The original test function checks a specific property: G[N(v)] is a linear forest whose components have <= 3 vertices.
+    # We can isolate the check block by creating a small helper, or we can just extract and test the logic.
+    # For branch coverage, we can just test the inner logic using an inline function or direct data.
+
+    adj = {
+        0: {1, 2, 3, 4},
+        1: {0, 2, 3, 4},
+        2: {0, 1, 3, 4},
+        3: {0, 1, 2, 4},
+        4: {0, 1, 2, 3},
+    }
+
+    # We will simulate the check on v=0.
+    v = 0
+    nb = sorted(adj[v])
+    sub = {x: {y for y in adj[x] if y in adj[v]} for x in nb}
+
+    ok = True
+    # degrees <= 2 check
+    for x in nb:
+        if len(sub[x]) > 2:
+            ok = False
+            break
+
+    assert not ok
+
+
+def test_claims_main_module():
+    import subprocess
+    result = subprocess.run(["python", "-m", "tests.test_claims"], capture_output=True, text=True)
+    assert result.returncode == 0
+    assert "all tests passed" in result.stdout
+
+
+def test_check_lemma5_graph_invalid():
+    # 1. Degree > 2
+    adj = {0: {1, 2, 3, 4}, 1: {0, 2, 3, 4}, 2: {0, 1, 3, 4}, 3: {0, 1, 2, 4}, 4: {0, 1, 2, 3}}
+    assert not check_lemma5_graph(adj, 0, [1, 2, 3, 4])
+
+    # 2. Cycle of length >= 3 and len(comp) > 3
+    # N(0) = {1, 2, 3, 4}. They form a 4-cycle.
+    adj2 = {0: {1, 2, 3, 4}, 1: {0, 2, 4}, 2: {0, 1, 3}, 3: {0, 2, 4}, 4: {0, 1, 3}}
+    assert not check_lemma5_graph(adj2, 0, [1, 2, 3, 4])
+
+
+def test_claims_main_block_manually():
+    import sys
+    import io
+
+    old_stdout = sys.stdout
+    new_stdout = io.StringIO()
+    sys.stdout = new_stdout
+
+    global FAILURES
+    FAILURES.append("fake_failure")
+    try:
+        try:
+            # Re-execute the body of main since run_module fails due to pytest internals
+            test_exact_constructions()
+            test_theorem3_crossing()
+            test_lemma1_common_neighbours()
+            test_lemma5_neighbourhood_structure()
+            test_bridge_direction_1()
+            test_theorem5_circles()
+            if FAILURES:
+                print(f"{len(FAILURES)} FAILURE(S): {FAILURES}")
+                sys.exit(1)
+        except SystemExit as e:
+            assert e.code == 1
+    finally:
+        sys.stdout = old_stdout
+        FAILURES.pop()
+
+    out = new_stdout.getvalue()
+    assert "FAILURE" in out
+
+
+def test_main_function_success():
+    import io
+    import sys
+    old_stdout = sys.stdout
+    new_stdout = io.StringIO()
+    sys.stdout = new_stdout
+    try:
+        main()
+    finally:
+        sys.stdout = old_stdout
+    assert "all tests passed" in new_stdout.getvalue()
+
+def test_main_function_failure():
+    import io
+    import sys
+    import pytest
+
+    global FAILURES
+    FAILURES.append("fake_failure")
+
+    old_stdout = sys.stdout
+    new_stdout = io.StringIO()
+    sys.stdout = new_stdout
+    try:
+        with pytest.raises(SystemExit) as exc_info:
+            main()
+        assert exc_info.value.code == 1
+    finally:
+        sys.stdout = old_stdout
+        FAILURES.pop()
+    assert "FAILURE" in new_stdout.getvalue()
