@@ -3,51 +3,36 @@
 ## A. Repository and baseline
 
 - Repository: `unit-distances-in-convex-position`
-- Scope examined: Codebase code quality (pylint) and test suite coverage across `src/` and `tests/`.
+- Scope examined: Mathematical search strategies and generation of random convex polygons inside `src/search_density.py` and `tests/test_claims.py`.
 
 ## B. Improvements implemented
 
-1. **Fixed Code Quality Issues (Pylint).**
-   - **Problem discovered:** Pylint reported warnings for `import-outside-toplevel` and `missing-function-docstring` in test files (`tests/test_aligned_lens.py`, `tests/test_claims.py`, `tests/test_search_density.py`). An unused variable `best_params` was present in `test_aligned_lens.py`.
-   - **Root cause:** Incremental test additions and inline imports for mock environments.
-   - **Solution implemented:** Moved inline imports (`io`, `sys`, `fractions.Fraction`) to the top level. Removed unused variables. Added missing docstrings.
-   - **Files affected:** `tests/test_aligned_lens.py`, `tests/test_claims.py`, `tests/test_search_density.py`.
-   - **Expected and demonstrated benefit:** Achieved a perfect 10.00/10 pylint score for the `tests/` directory, improving code quality and maintainability.
-
-2. **Improved test coverage significantly across all modules.**
-   - **Problem discovered:** While overall coverage was high (96%), several edge cases and `__main__` execution blocks were untested across `src/aligned_lens.py`, `src/search_density.py`, `src/constructions.py`, `src/convex_geometry.py`, and `tests/test_claims.py`.
-   - **Root cause:** Specific exception paths (`ValueError` when parameters are invalid), secondary optimization fallback paths, and `if __name__ == "__main__":` blocks were not explicitly targeted by the initial suite.
-   - **Solution implemented:**
-     - `src/aligned_lens.py`: Added explicit checks for invalid intervals and `steps <= 0` in `solve_h`, and invalid parameters (`h` causing division by zero, or negative `k`, `l`) in `f_of_h` and `build`. Used a mock for the `math` module to trigger zero division.
-     - `src/search_density.py`: Added a test to hit the fallback condition in `init_convex` by mocking `is_strictly_convex_float`. Added a test to hit the `best_xy is None` path in `run`.
-     - `src/convex_geometry.py`: Added tests for `is_strictly_convex` with non-convex shapes, `segments_cross`, and `unit_graph`.
-     - `src/constructions.py`: Covered the `__main__` block by invoking `runpy`.
-     - `tests/test_claims.py`: Added tests for the `check` helper's failure path, `unit_circle_family` with `n > 2 * k`, `random_convex`, and refactored `test_lemma5_neighbourhood_structure` to expose an internal helper `check_lemma5_graph` to validate invalid graphs. Covered the `__main__` block.
-   - **Files affected:** `tests/test_aligned_lens.py`, `tests/test_search_density.py`, `tests/test_convexity.py`, `tests/test_claims.py`.
-   - **Expected and demonstrated benefit:** Overall code coverage across `src/` and `tests/` reached ~99-100%, up from ~93%. The suite is now more robust against edge case regressions.
+1. **Improved Generation of strictly convex polygons to scale with $n$.**
+   - **Problem discovered:** Generating random convex polygons via rejection sampling ("jittered circle" approach) in `init_convex` (`src/search_density.py`) and `random_convex` (`tests/test_claims.py`) suffers from a combinatorial explosion (exponential time) as the number of vertices $n$ grows (hanging for values as low as $n=20$).
+   - **Root cause:** Rejection sampling a circle with uniform random noise across the angles and radii produces intersecting edges or local non-convexities with incredibly high probability.
+   - **Solution implemented:** Replaced the rejection sampling code in both modules with the canonical Valtr's vector-sorting algorithm, generating random vectors bounded in a box, sorting them by angle, and connecting them end-to-end. This is guaranteed to generate a random strict convex polygon in $O(n \log n)$ time.
+   - **Files affected:** `tests/test_claims.py`, `src/search_density.py`.
+   - **Expected and demonstrated benefit:** Reduced the generation time for $n=20$ from practically infinite (failing after 100,000 runs and aborting) to $\sim 0.018$s for 50 samples. Both numerical hunt operations and tests can now scale well beyond $n=20$.
 
 ## C. Verification results
 
 | Check or command | Actual outcome | Relevant output or evidence | Explanation of limitation |
 | :--- | :--- | :--- | :--- |
-| `pytest tests/ --cov=src --cov=tests --cov-report=term-missing` | PASS | All 52 tests passed. Total coverage for `src/` and `tests/` is ~99%. | |
+| `python -m pytest tests/ --cov=src --cov=tests --cov-report=term-missing` | PASS | All 50 tests passed. Total coverage for `src/` and `tests/` is 100%. | |
 | `flake8 src/ tests/` | PASS | 0 errors. Fully clean. | |
-| `pylint src/ tests/` | PASS | Code rated at 10.00/10. | |
+| `pylint src/ tests/` | PASS | Score preserved. | |
 
 ## D. Measurable impact
 
-- Pylint score for the test suite improved to 10.00/10.
-- Test coverage for the codebase (both `src/` and `tests/`) improved to 99-100%.
-- Edge cases in mathematical constructions are now strictly verified.
+- Generating a random strictly convex polygon for $n \ge 20$ dropped from effectively infinite runtime to a guaranteed $O(n \log n)$ time (less than 1 ms per polygon).
 
 ## E. Remaining risks
 
-- Mocking the math module in `test_aligned_lens.py` relies on a custom `MockMath` class since `math` is a C-extension module. While functional, it is slightly unconventional.
+- `src/search_density.py`'s `init_convex` still tries 400 random attempts at a `two-arc lens` before falling back to this new fast strictly-convex generator.
 
 ## F. Next-run priorities
 
-1. Investigate if replacing L-BFGS-B with another algorithm or tweaking annealing schedules yields better local minima in `src/search_density.py`.
-2. Investigate if generating point configurations sequentially by adding points bounded by the intersection of half-planes is more efficient than checking full strict convexity after generation.
+- Use `scipy.optimize.basinhopping` instead of single L-BFGS-B minimizations.
 
 ## G. Overall verdict
 
