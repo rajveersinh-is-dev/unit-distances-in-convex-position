@@ -145,18 +145,40 @@ def test_certificate():
 # ------------------------------------------- Lemma 1 / Lemma 5 on random tests
 
 def random_convex(n: int, rng: random.Random) -> list[tuple[float, float]]:
-    """Generate a random strictly convex polygon with n vertices."""
-    while True:
-        ang = rng.uniform(0, 2 * math.pi)
-        pts = [
-            (
-                (1 + rng.uniform(-0.3, 0.3)) * math.cos(ang + i * 2 * math.pi / n),
-                (1 + rng.uniform(-0.3, 0.3)) * math.sin(ang + i * 2 * math.pi / n),
-            )
-            for i in range(n)
-        ]
-        if is_strictly_convex_float(pts, tol=0.0):
-            return pts
+    """Generate a random strictly convex polygon with n vertices.
+    Uses the canonical vector-sorting method for O(n log n) efficient generation
+    instead of exponential-time rejection sampling."""
+    xs = [rng.uniform(0, 1) for _ in range(n)]
+    ys = [rng.uniform(0, 1) for _ in range(n)]
+    xs.sort()
+    ys.sort()
+
+    x_chain1, x_chain2 = [xs[0]], [xs[0]]
+    y_chain1, y_chain2 = [ys[0]], [ys[0]]
+    for i in range(1, n - 1):
+        (x_chain1 if rng.choice([True, False]) else x_chain2).append(xs[i])
+        (y_chain1 if rng.choice([True, False]) else y_chain2).append(ys[i])
+    x_chain1.append(xs[-1])
+    x_chain2.append(xs[-1])
+    y_chain1.append(ys[-1])
+    y_chain2.append(ys[-1])
+
+    vec_xs = [x_chain1[i + 1] - x_chain1[i] for i in range(len(x_chain1) - 1)] + \
+             [x_chain2[i] - x_chain2[i + 1] for i in range(len(x_chain2) - 1)]
+    vec_ys = [y_chain1[i + 1] - y_chain1[i] for i in range(len(y_chain1) - 1)] + \
+             [y_chain2[i] - y_chain2[i + 1] for i in range(len(y_chain2) - 1)]
+
+    rng.shuffle(vec_ys)
+    vecs = list(zip(vec_xs, vec_ys))
+    vecs.sort(key=lambda v: math.atan2(v[1], v[0]))
+
+    pts = []
+    x, y = 0.0, 0.0
+    for vx, vy in vecs:
+        pts.append((x, y))
+        x += vx
+        y += vy
+    return pts
 
 
 def test_lemma1_common_neighbours() -> None:
