@@ -164,7 +164,13 @@ def anneal(n: int, seed: int = 0):
     best_v = len(unit_pairs_float(best_xy, tol=1e-6))
 
     for sigma in sigmas:
-        res = scipy.optimize.minimize(objective, x_flat, args=(sigma,), method='L-BFGS-B')
+        res = scipy.optimize.basinhopping(
+            objective,
+            x_flat,
+            minimizer_kwargs={'args': (sigma,), 'method': 'L-BFGS-B'},
+            niter=5,
+            seed=seed
+        )
         x_flat = res.x
         xy_cand = x_flat.reshape((n, 2))
         cand_v = len(unit_pairs_float(xy_cand, tol=1e-6))
