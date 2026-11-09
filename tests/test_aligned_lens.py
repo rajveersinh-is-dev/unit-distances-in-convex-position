@@ -91,13 +91,16 @@ def test_main():
     assert "params (k, l, h, n_out, n_in, n)" in out
     assert "degrees:" in out
 
+
 def test_solve_h_invalid_interval():
     with pytest.raises(ValueError, match="interval must satisfy 0 < lo < hi"):
         solve_h(8, 2, interval=(1.0, 0.5))
 
+
 def test_solve_h_invalid_steps():
     with pytest.raises(ValueError, match="steps must be a positive integer"):
         solve_h(8, 2, steps=0)
+
 
 def test_f_of_h_invalid_k_l():
     with pytest.raises(ValueError, match="k and l must be positive integers"):
@@ -105,20 +108,24 @@ def test_f_of_h_invalid_k_l():
     with pytest.raises(ValueError, match="k and l must be positive integers"):
         f_of_h(0.1, 1, -2)
 
+
 def test_build_invalid_k_l():
     with pytest.raises(ValueError, match="k and l must be positive integers"):
         build(0.1, -1, 2, 3, 3)
 
 
-
 def test_build_invalid_h_zero_division(monkeypatch):
     import src.aligned_lens
+
     class MockMath:
+
         def __init__(self):
             import math
             self.math = math
+
         def __getattr__(self, name):
             return getattr(self.math, name)
+
         def sin(self, x):
             return 0.0
 
@@ -126,14 +133,19 @@ def test_build_invalid_h_zero_division(monkeypatch):
     with pytest.raises(ValueError, match="Invalid h leading to division by zero in radius computation"):
         build(2 * 3.14, 1, 2, 3, 3)
 
+
 def test_f_of_h_invalid_h_zero_division(monkeypatch):
     import src.aligned_lens
+
     class MockMath:
+
         def __init__(self):
             import math
             self.math = math
+
         def __getattr__(self, name):
             return getattr(self.math, name)
+
         def sin(self, x):
             return 0.0
 
@@ -141,16 +153,10 @@ def test_f_of_h_invalid_h_zero_division(monkeypatch):
     with pytest.raises(ValueError, match=r"sin\(k·h/2\) and sin\(h/2\) must be non‑zero"):
         f_of_h(2 * 3.14, 1, 2)
 
+
 def test_aligned_lens_main_module():
-    import runpy
-    import io
+    import subprocess
     import sys
-    old_stdout = sys.stdout
-    new_stdout = io.StringIO()
-    sys.stdout = new_stdout
-    try:
-        runpy.run_module("src.aligned_lens", run_name="__main__")
-        out = new_stdout.getvalue()
-    finally:
-        sys.stdout = old_stdout
+    result = subprocess.run([sys.executable, "-m", "src.aligned_lens"], capture_output=True, text=True, check=True)
+    out = result.stdout
     assert "best unit count found by grid alignment" in out

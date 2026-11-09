@@ -199,7 +199,6 @@ def test_lemma1_common_neighbours() -> None:
     del rng
 
 
-
 def check_lemma5_graph(adj, v, nb):
     ok = True
     sub = {x: {y for y in adj[x] if y in adj[v]} for x in nb}
@@ -221,6 +220,7 @@ def check_lemma5_graph(adj, v, nb):
         if len(comp) > 3:
             ok = False
     return ok
+
 
 def test_lemma5_neighbourhood_structure() -> None:
     """Lemma 5: G[N(v)] is a linear forest whose components have <= 3 vertices."""
@@ -294,22 +294,18 @@ def main():
         sys.exit(1)
     print("all tests passed")
 
+
 if __name__ == "__main__":
     main()
 
+
 def test_constructions_main_module():
-    import runpy
-    import io
+    import subprocess
     import sys
-    old_stdout = sys.stdout
-    new_stdout = io.StringIO()
-    sys.stdout = new_stdout
-    try:
-        runpy.run_module("src.constructions", run_name="__main__")
-        out = new_stdout.getvalue()
-    finally:
-        sys.stdout = old_stdout
+    result = subprocess.run([sys.executable, "-m", "src.constructions"], capture_output=True, text=True, check=True)
+    out = result.stdout
     assert "RECTANGLE 3/5 x 4/5" in out
+
 
 def test_check_false(monkeypatch):
     """Test check function correctly handles failure conditions."""
@@ -322,17 +318,20 @@ def test_check_false(monkeypatch):
     # Cleanup
     FAILURES.pop()
 
+
 def test_unit_circle_family_extra_points():
     """Test unit_circle_family when n > 2 * k to trigger sorting and extra points logic."""
     # k = 1, 2*k = 2. n = 3 > 2*k.
     pts = unit_circle_family(1, 3)
     assert len(pts) == 3
 
+
 def test_random_convex_execution():
     """Execute random_convex to cover its lines."""
     rng = random.Random(42)
     pts = random_convex(5, rng)
     assert len(pts) == 5
+
 
 def test_lemma5_invalid_graph():
     """Test the validation logic inside test_lemma5_neighbourhood_structure with an invalid graph."""
@@ -365,7 +364,8 @@ def test_lemma5_invalid_graph():
 
 def test_claims_main_module():
     import subprocess
-    result = subprocess.run(["python", "-m", "tests.test_claims"], capture_output=True, text=True)
+    import sys
+    result = subprocess.run([sys.executable, "-m", "tests.test_claims"], capture_output=True, text=True)
     assert result.returncode == 0
     assert "all tests passed" in result.stdout
 
@@ -389,7 +389,6 @@ def test_claims_main_block_manually():
     new_stdout = io.StringIO()
     sys.stdout = new_stdout
 
-    global FAILURES
     FAILURES.append("fake_failure")
     try:
         try:
@@ -425,12 +424,12 @@ def test_main_function_success():
         sys.stdout = old_stdout
     assert "all tests passed" in new_stdout.getvalue()
 
+
 def test_main_function_failure():
     import io
     import sys
     import pytest
 
-    global FAILURES
     FAILURES.append("fake_failure")
 
     old_stdout = sys.stdout
