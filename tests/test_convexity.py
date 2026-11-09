@@ -79,6 +79,7 @@ def test_degrees_and_report():
     assert "strictly convex: True" in rep
     assert "unit-degree sequence" in rep
 
+
 def test_is_strictly_convex_non_convex():
     # Provide a non-convex polygon to trigger False return
     pts = [(0.0, 0.0), (2.0, 0.0), (1.0, 1.0), (1.0, 2.0)]
@@ -86,6 +87,7 @@ def test_is_strictly_convex_non_convex():
     from fractions import Fraction as F
     fpts = [(F(x), F(y)) for x, y in pts]
     assert not is_strictly_convex(fpts)
+
 
 def test_segments_cross():
     from src.convex_geometry import segments_cross
@@ -98,6 +100,7 @@ def test_segments_cross():
 
     assert segments_cross(p, q, r, s)
     assert not segments_cross(p, r, q, s)
+
 
 def test_unit_graph():
     from src.convex_geometry import unit_graph

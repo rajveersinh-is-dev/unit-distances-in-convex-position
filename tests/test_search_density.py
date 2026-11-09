@@ -71,6 +71,7 @@ def test_run():
     assert "best u(P)" in out
     assert "convex" in out
 
+
 def test_init_convex_exhausts_loop(monkeypatch):
     """Test init_convex loop exhaustion by forcing is_strictly_convex_float to return False."""
     from src import search_density
@@ -79,18 +80,12 @@ def test_init_convex_exhausts_loop(monkeypatch):
     xy = init_convex(6, rng)
     assert xy.shape == (6, 2)
 
+
 def test_run_main_module():
-    import runpy
-    import io
+    import subprocess
     import sys
-    old_stdout = sys.stdout
-    new_stdout = io.StringIO()
-    sys.stdout = new_stdout
-    try:
-        runpy.run_module("src.search_density", run_name="__main__")
-        out = new_stdout.getvalue()
-    finally:
-        sys.stdout = old_stdout
+    result = subprocess.run([sys.executable, "-m", "src.search_density"], capture_output=True, text=True, check=True)
+    out = result.stdout
     assert "best u(P)" in out
 
 
@@ -98,6 +93,7 @@ def test_run_best_xy_none(monkeypatch):
     """Test run logic where best_xy is None initially."""
     from src import search_density
     original_anneal = search_density.anneal
+
     def mock_anneal(n, seed):
         # We need to make sure v <= best (which is 0 initially).
         # We can mock unit_pairs_float to return an empty list so v=0
