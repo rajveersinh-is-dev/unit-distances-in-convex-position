@@ -26,6 +26,7 @@ from src.convex_geometry import (
     degrees,
     is_strictly_convex_float,
     unit_pairs_float,
+    random_convex,
 )
 
 
@@ -92,36 +93,7 @@ def init_convex(n: int, rng: random.Random) -> np.ndarray:
         xy = np.array(pts)
         if is_strictly_convex_float(xy):
             return xy
-    xs = [rng.uniform(0, 1) for _ in range(n)]
-    ys = [rng.uniform(0, 1) for _ in range(n)]
-    xs.sort()
-    ys.sort()
-
-    x_chain1, x_chain2 = [xs[0]], [xs[0]]
-    y_chain1, y_chain2 = [ys[0]], [ys[0]]
-    for i in range(1, n - 1):
-        (x_chain1 if rng.choice([True, False]) else x_chain2).append(xs[i])
-        (y_chain1 if rng.choice([True, False]) else y_chain2).append(ys[i])
-    x_chain1.append(xs[-1])
-    x_chain2.append(xs[-1])
-    y_chain1.append(ys[-1])
-    y_chain2.append(ys[-1])
-
-    vec_xs = [x_chain1[i + 1] - x_chain1[i] for i in range(len(x_chain1) - 1)] + \
-             [x_chain2[i] - x_chain2[i + 1] for i in range(len(x_chain2) - 1)]
-    vec_ys = [y_chain1[i + 1] - y_chain1[i] for i in range(len(y_chain1) - 1)] + \
-             [y_chain2[i] - y_chain2[i + 1] for i in range(len(y_chain2) - 1)]
-
-    rng.shuffle(vec_ys)
-    vecs = list(zip(vec_xs, vec_ys))
-    vecs.sort(key=lambda v: math.atan2(v[1], v[0]))
-
-    pts = []
-    x, y = 0.0, 0.0
-    for vx, vy in vecs:
-        pts.append((x, y))
-        x += vx
-        y += vy
+    pts = random_convex(n, rng)
     return np.array(pts)
 
 

@@ -1,10 +1,13 @@
 """Tests for grid-aligned two-circle lens constructions."""
 
+import contextlib
 import io
 import math
+import subprocess
 import sys
 import pytest
 
+import src.aligned_lens
 from src.aligned_lens import f_of_h, solve_h, build, _evaluate_configuration, _search_best, main
 
 
@@ -78,14 +81,10 @@ def test_search_best():
 
 def test_main():
     """Test the main entry point without mocking to verify real execution."""
-    old_stdout = sys.stdout
     new_stdout = io.StringIO()
-    sys.stdout = new_stdout
-    try:
+    with contextlib.redirect_stdout(new_stdout):
         main()
-        out = new_stdout.getvalue()
-    finally:
-        sys.stdout = old_stdout
+    out = new_stdout.getvalue()
 
     assert "best unit count" in out
     assert "params (k, l, h, n_out, n_in, n)" in out
@@ -114,49 +113,33 @@ def test_build_invalid_k_l():
         build(0.1, -1, 2, 3, 3)
 
 
+class MockMath:
+    """MockMath."""
+
+    def __init__(self):
+        self.math = math
+
+    def __getattr__(self, name):
+        return getattr(self.math, name)
+
+    def sin(self, _x):
+        """Sin."""
+        return 0.0
+
+
 def test_build_invalid_h_zero_division(monkeypatch):
-    import src.aligned_lens
-
-    class MockMath:
-
-        def __init__(self):
-            import math
-            self.math = math
-
-        def __getattr__(self, name):
-            return getattr(self.math, name)
-
-        def sin(self, x):
-            return 0.0
-
     monkeypatch.setattr(src.aligned_lens, "math", MockMath())
     with pytest.raises(ValueError, match="Invalid h leading to division by zero in radius computation"):
         build(2 * 3.14, 1, 2, 3, 3)
 
 
 def test_f_of_h_invalid_h_zero_division(monkeypatch):
-    import src.aligned_lens
-
-    class MockMath:
-
-        def __init__(self):
-            import math
-            self.math = math
-
-        def __getattr__(self, name):
-            return getattr(self.math, name)
-
-        def sin(self, x):
-            return 0.0
-
     monkeypatch.setattr(src.aligned_lens, "math", MockMath())
     with pytest.raises(ValueError, match=r"sin\(k·h/2\) and sin\(h/2\) must be non‑zero"):
         f_of_h(2 * 3.14, 1, 2)
 
 
 def test_aligned_lens_main_module():
-    import subprocess
-    import sys
     result = subprocess.run([sys.executable, "-m", "src.aligned_lens"], capture_output=True, text=True, check=True)
     out = result.stdout
     assert "best unit count found by grid alignment" in out

@@ -10,12 +10,16 @@ checked symbolically below.
 
 from __future__ import annotations
 
+import contextlib
+import io
 import math
 import random
-import io
+import subprocess
 import sys
 from fractions import Fraction as F
 from itertools import combinations
+
+import pytest
 
 from src.convex_geometry import (
     dist2,
@@ -24,6 +28,7 @@ from src.convex_geometry import (
     segments_cross,
     unit_pairs,
     unit_graph,
+    random_convex,
 )
 from src.constructions import (
     hexagon_three_crossing,
@@ -128,14 +133,10 @@ def test_symmetric_2k_gon():
 
 def test_certificate():
     """Test certificate."""
-    old_stdout = sys.stdout
     new_stdout = io.StringIO()
-    sys.stdout = new_stdout
-    try:
+    with contextlib.redirect_stdout(new_stdout):
         certificate(rectangle_two_crossing(), "RECTANGLE TEST")
-        out = new_stdout.getvalue()
-    finally:
-        sys.stdout = old_stdout
+    out = new_stdout.getvalue()
 
     assert "RECTANGLE TEST" in out
     assert "n = 4" in out
@@ -143,43 +144,6 @@ def test_certificate():
 
 
 # ------------------------------------------- Lemma 1 / Lemma 5 on random tests
-
-def random_convex(n: int, rng: random.Random) -> list[tuple[float, float]]:
-    """Generate a random strictly convex polygon with n vertices.
-    Uses the canonical vector-sorting method for O(n log n) efficient generation
-    instead of exponential-time rejection sampling."""
-    xs = [rng.uniform(0, 1) for _ in range(n)]
-    ys = [rng.uniform(0, 1) for _ in range(n)]
-    xs.sort()
-    ys.sort()
-
-    x_chain1, x_chain2 = [xs[0]], [xs[0]]
-    y_chain1, y_chain2 = [ys[0]], [ys[0]]
-    for i in range(1, n - 1):
-        (x_chain1 if rng.choice([True, False]) else x_chain2).append(xs[i])
-        (y_chain1 if rng.choice([True, False]) else y_chain2).append(ys[i])
-    x_chain1.append(xs[-1])
-    x_chain2.append(xs[-1])
-    y_chain1.append(ys[-1])
-    y_chain2.append(ys[-1])
-
-    vec_xs = [x_chain1[i + 1] - x_chain1[i] for i in range(len(x_chain1) - 1)] + \
-             [x_chain2[i] - x_chain2[i + 1] for i in range(len(x_chain2) - 1)]
-    vec_ys = [y_chain1[i + 1] - y_chain1[i] for i in range(len(y_chain1) - 1)] + \
-             [y_chain2[i] - y_chain2[i + 1] for i in range(len(y_chain2) - 1)]
-
-    rng.shuffle(vec_ys)
-    vecs = list(zip(vec_xs, vec_ys))
-    vecs.sort(key=lambda v: math.atan2(v[1], v[0]))
-
-    pts = []
-    x, y = 0.0, 0.0
-    for vx, vy in vecs:
-        pts.append((x, y))
-        x += vx
-        y += vy
-    return pts
-
 
 def test_lemma1_common_neighbours() -> None:
     """Lemma 1: at most two common unit neighbours.  Tested on exact rational
@@ -300,8 +264,6 @@ if __name__ == "__main__":
 
 
 def test_constructions_main_module():
-    import subprocess
-    import sys
     result = subprocess.run([sys.executable, "-m", "src.constructions"], capture_output=True, text=True, check=True)
     out = result.stdout
     assert "RECTANGLE 3/5 x 4/5" in out
@@ -363,9 +325,7 @@ def test_lemma5_invalid_graph():
 
 
 def test_claims_main_module():
-    import subprocess
-    import sys
-    result = subprocess.run([sys.executable, "-m", "tests.test_claims"], capture_output=True, text=True)
+    result = subprocess.run([sys.executable, "-m", "tests.test_claims"], capture_output=True, text=True, check=False)
     assert result.returncode == 0
     assert "all tests passed" in result.stdout
 
@@ -382,30 +342,24 @@ def test_check_lemma5_graph_invalid():
 
 
 def test_claims_main_block_manually():
-    import sys
-    import io
-
-    old_stdout = sys.stdout
     new_stdout = io.StringIO()
-    sys.stdout = new_stdout
-
     FAILURES.append("fake_failure")
     try:
-        try:
-            # Re-execute the body of main since run_module fails due to pytest internals
-            test_exact_constructions()
-            test_theorem3_crossing()
-            test_lemma1_common_neighbours()
-            test_lemma5_neighbourhood_structure()
-            test_bridge_direction_1()
-            test_theorem5_circles()
-            if FAILURES:
-                print(f"{len(FAILURES)} FAILURE(S): {FAILURES}")
-                sys.exit(1)
-        except SystemExit as e:
-            assert e.code == 1
+        with contextlib.redirect_stdout(new_stdout):
+            try:
+                # Re-execute the body of main since run_module fails due to pytest internals
+                test_exact_constructions()
+                test_theorem3_crossing()
+                test_lemma1_common_neighbours()
+                test_lemma5_neighbourhood_structure()
+                test_bridge_direction_1()
+                test_theorem5_circles()
+                if FAILURES:
+                    print(f"{len(FAILURES)} FAILURE(S): {FAILURES}")
+                    sys.exit(1)
+            except SystemExit as e:
+                assert e.code == 1
     finally:
-        sys.stdout = old_stdout
         FAILURES.pop()
 
     out = new_stdout.getvalue()
@@ -413,33 +367,20 @@ def test_claims_main_block_manually():
 
 
 def test_main_function_success():
-    import io
-    import sys
-    old_stdout = sys.stdout
     new_stdout = io.StringIO()
-    sys.stdout = new_stdout
-    try:
+    with contextlib.redirect_stdout(new_stdout):
         main()
-    finally:
-        sys.stdout = old_stdout
     assert "all tests passed" in new_stdout.getvalue()
 
 
 def test_main_function_failure():
-    import io
-    import sys
-    import pytest
-
     FAILURES.append("fake_failure")
-
-    old_stdout = sys.stdout
     new_stdout = io.StringIO()
-    sys.stdout = new_stdout
     try:
-        with pytest.raises(SystemExit) as exc_info:
-            main()
-        assert exc_info.value.code == 1
+        with contextlib.redirect_stdout(new_stdout):
+            with pytest.raises(SystemExit) as exc_info:
+                main()
+            assert exc_info.value.code == 1
     finally:
-        sys.stdout = old_stdout
         FAILURES.pop()
     assert "FAILURE" in new_stdout.getvalue()

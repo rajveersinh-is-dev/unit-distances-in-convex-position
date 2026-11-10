@@ -1,10 +1,13 @@
 """Tests for numerical search density."""
 
+import contextlib
 import io
 import random
+import subprocess
 import sys
 import numpy as np
 
+import src.search_density
 from src.search_density import soft_score, convexity_penalty, init_convex, anneal, run
 
 
@@ -59,14 +62,10 @@ def test_init_convex_fallback():
 
 def test_run():
     """Test run executes with minimal params."""
-    old_stdout = sys.stdout
     new_stdout = io.StringIO()
-    sys.stdout = new_stdout
-    try:
+    with contextlib.redirect_stdout(new_stdout):
         run([6], 1)
-        out = new_stdout.getvalue()
-    finally:
-        sys.stdout = old_stdout
+    out = new_stdout.getvalue()
 
     assert "best u(P)" in out
     assert "convex" in out
@@ -74,16 +73,13 @@ def test_run():
 
 def test_init_convex_exhausts_loop(monkeypatch):
     """Test init_convex loop exhaustion by forcing is_strictly_convex_float to return False."""
-    from src import search_density
-    monkeypatch.setattr(search_density, "is_strictly_convex_float", lambda xy: False)
+    monkeypatch.setattr(src.search_density, "is_strictly_convex_float", lambda _xy: False)
     rng = random.Random(42)
     xy = init_convex(6, rng)
     assert xy.shape == (6, 2)
 
 
 def test_run_main_module():
-    import subprocess
-    import sys
     result = subprocess.run([sys.executable, "-m", "src.search_density"], capture_output=True, text=True, check=True)
     out = result.stdout
     assert "best u(P)" in out
@@ -91,24 +87,17 @@ def test_run_main_module():
 
 def test_run_best_xy_none(monkeypatch):
     """Test run logic where best_xy is None initially."""
-    from src import search_density
-    original_anneal = search_density.anneal
+    original_anneal = src.search_density.anneal
 
     def mock_anneal(n, seed):
         # We need to make sure v <= best (which is 0 initially).
         # We can mock unit_pairs_float to return an empty list so v=0
         return original_anneal(n, seed)[0], 0
-    monkeypatch.setattr(search_density, "anneal", mock_anneal)
-    monkeypatch.setattr(search_density, "unit_pairs_float", lambda xy, tol=1e-6: [])
+    monkeypatch.setattr(src.search_density, "anneal", mock_anneal)
+    monkeypatch.setattr(src.search_density, "unit_pairs_float", lambda _xy, tol=1e-6: [])
 
-    import io
-    import sys
-    old_stdout = sys.stdout
     new_stdout = io.StringIO()
-    sys.stdout = new_stdout
-    try:
+    with contextlib.redirect_stdout(new_stdout):
         run([6], 1)
-        out = new_stdout.getvalue()
-    finally:
-        sys.stdout = old_stdout
+    out = new_stdout.getvalue()
     assert "best u(P)" in out
