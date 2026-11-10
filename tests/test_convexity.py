@@ -1,7 +1,15 @@
 """Convexity tests."""
 
 from fractions import Fraction as F
-from src.convex_geometry import is_strictly_convex, is_strictly_convex_float, degrees, report
+
+from src.convex_geometry import (
+    degrees,
+    is_strictly_convex,
+    is_strictly_convex_float,
+    report,
+    segments_cross,
+    unit_graph,
+)
 
 
 def test_pentagram_is_not_strictly_convex():
@@ -81,18 +89,14 @@ def test_degrees_and_report():
 
 
 def test_is_strictly_convex_non_convex():
-    # Provide a non-convex polygon to trigger False return
+    """Provide a non-convex polygon to trigger False return."""
     pts = [(0.0, 0.0), (2.0, 0.0), (1.0, 1.0), (1.0, 2.0)]
-    from src.convex_geometry import is_strictly_convex
-    from fractions import Fraction as F
     fpts = [(F(x), F(y)) for x, y in pts]
     assert not is_strictly_convex(fpts)
 
 
 def test_segments_cross():
-    from src.convex_geometry import segments_cross
-    from fractions import Fraction as F
-
+    """Test segments_cross."""
     p = (F(0), F(0))
     q = (F(2), F(2))
     r = (F(0), F(2))
@@ -103,8 +107,7 @@ def test_segments_cross():
 
 
 def test_unit_graph():
-    from src.convex_geometry import unit_graph
-    from fractions import Fraction as F
+    """Test unit_graph."""
     pts = [(F(0), F(0)), (F(1), F(0)), (F(0), F(1))]
     adj = unit_graph(pts)
     assert len(adj) == 3

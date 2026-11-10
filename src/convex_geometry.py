@@ -9,6 +9,8 @@ unit distances: the certificate is reproducible by anyone re-running this module
 
 from __future__ import annotations
 
+import math
+import random
 from fractions import Fraction as F
 from itertools import combinations
 from typing import List, Sequence, Tuple
@@ -151,3 +153,40 @@ def report(points: Sequence[Point], label: str = "") -> str:
     lines.append(f"  unit-degree sequence: {degrees(points)}")
     lines.append(f"  unit pairs (index i<j): {up}")
     return "\n".join(lines)
+
+
+def random_convex(n: int, rng: "random.Random") -> List[Tuple[float, float]]:
+    """Generate a random strictly convex polygon with n vertices.
+    Uses the canonical vector-sorting method for O(n log n) efficient generation
+    instead of exponential-time rejection sampling."""
+    xs = [rng.uniform(0, 1) for _ in range(n)]
+    ys = [rng.uniform(0, 1) for _ in range(n)]
+    xs.sort()
+    ys.sort()
+
+    x_chain1, x_chain2 = [xs[0]], [xs[0]]
+    y_chain1, y_chain2 = [ys[0]], [ys[0]]
+    for i in range(1, n - 1):
+        (x_chain1 if rng.choice([True, False]) else x_chain2).append(xs[i])
+        (y_chain1 if rng.choice([True, False]) else y_chain2).append(ys[i])
+    x_chain1.append(xs[-1])
+    x_chain2.append(xs[-1])
+    y_chain1.append(ys[-1])
+    y_chain2.append(ys[-1])
+
+    vec_xs = [x_chain1[i + 1] - x_chain1[i] for i in range(len(x_chain1) - 1)] + \
+             [x_chain2[i] - x_chain2[i + 1] for i in range(len(x_chain2) - 1)]
+    vec_ys = [y_chain1[i + 1] - y_chain1[i] for i in range(len(y_chain1) - 1)] + \
+             [y_chain2[i] - y_chain2[i + 1] for i in range(len(y_chain2) - 1)]
+
+    rng.shuffle(vec_ys)
+    vecs = list(zip(vec_xs, vec_ys))
+    vecs.sort(key=lambda v: math.atan2(v[1], v[0]))
+
+    pts = []
+    x, y = 0.0, 0.0
+    for vx, vy in vecs:
+        pts.append((x, y))
+        x += vx
+        y += vy
+    return pts
