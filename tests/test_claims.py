@@ -164,6 +164,7 @@ def test_lemma1_common_neighbours() -> None:
 
 
 def check_lemma5_graph(adj, v, nb):
+    """Check lemma5 graph."""
     ok = True
     sub = {x: {y for y in adj[x] if y in adj[v]} for x in nb}
     for x in nb:
@@ -246,6 +247,7 @@ def test_theorem5_circles() -> None:
 
 
 def main():
+    """Main."""
     test_exact_constructions()
     test_theorem3_crossing()
     test_lemma1_common_neighbours()
@@ -264,12 +266,14 @@ if __name__ == "__main__":
 
 
 def test_constructions_main_module():
-    result = subprocess.run([sys.executable, "-m", "src.constructions"], capture_output=True, text=True, check=True)
+    """Test constructions main module."""
+    result = subprocess.run([sys.executable, "-m", "src.constructions"],
+                            capture_output=True, text=True, check=True)
     out = result.stdout
     assert "RECTANGLE 3/5 x 4/5" in out
 
 
-def test_check_false(monkeypatch):
+def test_check_false():
     """Test check function correctly handles failure conditions."""
     failures_len_before = len(FAILURES)
     try:
@@ -296,9 +300,12 @@ def test_random_convex_execution():
 
 
 def test_lemma5_invalid_graph():
-    """Test the validation logic inside test_lemma5_neighbourhood_structure with an invalid graph."""
-    # The original test function checks a specific property: G[N(v)] is a linear forest whose components have <= 3 vertices.
-    # We can isolate the check block by creating a small helper, or we can just extract and test the logic.
+    """Test the validation logic inside test_lemma5_neighbourhood_structure
+    with an invalid graph."""
+    # The original test function checks a specific property: G[N(v)] is a linear forest
+    # whose components have <= 3 vertices.
+    # We can isolate the check block by creating a small helper, or we can just extract
+    # and test the logic.
     # For branch coverage, we can just test the inner logic using an inline function or direct data.
 
     adj = {
@@ -325,23 +332,29 @@ def test_lemma5_invalid_graph():
 
 
 def test_claims_main_module():
-    result = subprocess.run([sys.executable, "-m", "tests.test_claims"], capture_output=True, text=True, check=False)
+    """Test claims main module."""
+    result = subprocess.run([sys.executable, "-m", "tests.test_claims"],
+                            capture_output=True, text=True, check=False)
     assert result.returncode == 0
     assert "all tests passed" in result.stdout
 
 
 def test_check_lemma5_graph_invalid():
+    """Test check lemma5 graph invalid."""
     # 1. Degree > 2
-    adj = {0: {1, 2, 3, 4}, 1: {0, 2, 3, 4}, 2: {0, 1, 3, 4}, 3: {0, 1, 2, 4}, 4: {0, 1, 2, 3}}
+    adj = {0: {1, 2, 3, 4}, 1: {0, 2, 3, 4}, 2: {0, 1, 3, 4},
+           3: {0, 1, 2, 4}, 4: {0, 1, 2, 3}}
     assert not check_lemma5_graph(adj, 0, [1, 2, 3, 4])
 
     # 2. Cycle of length >= 3 and len(comp) > 3
     # N(0) = {1, 2, 3, 4}. They form a 4-cycle.
-    adj2 = {0: {1, 2, 3, 4}, 1: {0, 2, 4}, 2: {0, 1, 3}, 3: {0, 2, 4}, 4: {0, 1, 3}}
+    adj2 = {0: {1, 2, 3, 4}, 1: {0, 2, 4}, 2: {0, 1, 3},
+            3: {0, 2, 4}, 4: {0, 1, 3}}
     assert not check_lemma5_graph(adj2, 0, [1, 2, 3, 4])
 
 
 def test_claims_main_block_manually():
+    """Test claims main block manually."""
     new_stdout = io.StringIO()
     FAILURES.append("fake_failure")
     try:
@@ -367,6 +380,7 @@ def test_claims_main_block_manually():
 
 
 def test_main_function_success():
+    """Test main function success."""
     new_stdout = io.StringIO()
     with contextlib.redirect_stdout(new_stdout):
         main()
@@ -374,6 +388,7 @@ def test_main_function_success():
 
 
 def test_main_function_failure():
+    """Test main function failure."""
     FAILURES.append("fake_failure")
     new_stdout = io.StringIO()
     try:

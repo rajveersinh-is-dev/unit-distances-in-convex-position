@@ -80,7 +80,9 @@ def test_init_convex_exhausts_loop(monkeypatch):
 
 
 def test_run_main_module():
-    result = subprocess.run([sys.executable, "-m", "src.search_density"], capture_output=True, text=True, check=True)
+    """Test run main module."""
+    result = subprocess.run([sys.executable, "-m", "src.search_density"],
+                            capture_output=True, text=True, check=True)
     out = result.stdout
     assert "best u(P)" in out
 
