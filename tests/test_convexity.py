@@ -103,7 +103,7 @@ def test_segments_cross():
     s = (F(2), F(0))
 
     assert segments_cross(p, q, r, s)
-    assert not segments_cross(p, r, q, s)
+    assert not segments_cross(p, r, q, s)  # pylint: disable=arguments-out-of-order
 
 
 def test_unit_graph():

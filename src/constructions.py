@@ -117,7 +117,7 @@ def certificate(points: list[Point], name: str) -> None:
     print()
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     certificate(rectangle_two_crossing(), "RECTANGLE 3/5 x 4/5  (k = 2)")
     certificate(hexagon_three_crossing(), "HEXAGON  (k = 3)")
     certificate(octagon_four_crossing(), "OCTAGON  (k = 4)")

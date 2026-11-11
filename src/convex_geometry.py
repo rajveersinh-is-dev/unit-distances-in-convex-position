@@ -156,6 +156,7 @@ def report(points: Sequence[Point], label: str = "") -> str:
 
 
 def random_convex(n: int, rng: "random.Random") -> List[Tuple[float, float]]:
+    # pylint: disable=too-many-locals
     """Generate a random strictly convex polygon with n vertices.
     Uses the canonical vector-sorting method for O(n log n) efficient generation
     instead of exponential-time rejection sampling."""

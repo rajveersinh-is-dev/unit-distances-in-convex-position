@@ -175,5 +175,5 @@ def run(n_values, seeds):
               f"{str(is_strictly_convex_float(best_xy)):>7}  {degrees(best_xy, tol=1e-6)}")
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     run(n_values=list(range(6, 15)), seeds=3)

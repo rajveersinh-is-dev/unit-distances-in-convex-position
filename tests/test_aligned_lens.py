@@ -92,16 +92,19 @@ def test_main():
 
 
 def test_solve_h_invalid_interval():
+    """Test solve_h invalid interval."""
     with pytest.raises(ValueError, match="interval must satisfy 0 < lo < hi"):
         solve_h(8, 2, interval=(1.0, 0.5))
 
 
 def test_solve_h_invalid_steps():
+    """Test solve_h invalid steps."""
     with pytest.raises(ValueError, match="steps must be a positive integer"):
         solve_h(8, 2, steps=0)
 
 
 def test_f_of_h_invalid_k_l():
+    """Test f_of_h invalid k and l."""
     with pytest.raises(ValueError, match="k and l must be positive integers"):
         f_of_h(0.1, -1, 2)
     with pytest.raises(ValueError, match="k and l must be positive integers"):
@@ -109,6 +112,7 @@ def test_f_of_h_invalid_k_l():
 
 
 def test_build_invalid_k_l():
+    """Test build invalid k and l."""
     with pytest.raises(ValueError, match="k and l must be positive integers"):
         build(0.1, -1, 2, 3, 3)
 
@@ -128,18 +132,24 @@ class MockMath:
 
 
 def test_build_invalid_h_zero_division(monkeypatch):
+    """Test build invalid h leading to division by zero."""
     monkeypatch.setattr(src.aligned_lens, "math", MockMath())
-    with pytest.raises(ValueError, match="Invalid h leading to division by zero in radius computation"):
+    with pytest.raises(ValueError,
+                       match="Invalid h leading to division by zero in radius computation"):
         build(2 * 3.14, 1, 2, 3, 3)
 
 
 def test_f_of_h_invalid_h_zero_division(monkeypatch):
+    """Test f_of_h invalid h leading to division by zero."""
     monkeypatch.setattr(src.aligned_lens, "math", MockMath())
-    with pytest.raises(ValueError, match=r"sin\(k·h/2\) and sin\(h/2\) must be non‑zero"):
+    with pytest.raises(ValueError,
+                       match=r"sin\(k·h/2\) and sin\(h/2\) must be non‑zero"):
         f_of_h(2 * 3.14, 1, 2)
 
 
 def test_aligned_lens_main_module():
-    result = subprocess.run([sys.executable, "-m", "src.aligned_lens"], capture_output=True, text=True, check=True)
+    """Test aligned_lens main module execution."""
+    result = subprocess.run([sys.executable, "-m", "src.aligned_lens"],
+                            capture_output=True, text=True, check=True)
     out = result.stdout
     assert "best unit count found by grid alignment" in out

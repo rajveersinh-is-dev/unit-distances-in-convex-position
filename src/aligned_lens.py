@@ -292,5 +292,5 @@ def main() -> None:
         print("  degrees:", degrees(pts, tol=1e-6))
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     main()
